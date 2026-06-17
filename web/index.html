@@ -18,6 +18,10 @@
           Importovat .txt
           <input type="file" id="import-file" accept=".txt,text/plain" class="hidden" />
         </label>
+        <span class="btn-tooltip-wrap" id="export-btn-wrap">
+          <button type="button" id="btn-export" class="btn-secondary" disabled>Exportovat</button>
+          <span class="btn-tooltip" role="tooltip">Žádné faktury k exportu</span>
+        </span>
         <button type="button" id="btn-new-invoice" class="btn-primary">+ Nová faktura</button>
       </div>
     </header>
@@ -26,7 +30,7 @@
 
     <div id="template-banner" class="mb-6 hidden rounded-lg border border-brand/30 bg-brand-light px-4 py-3 text-sm text-neutral-800">
       <span class="font-medium text-brand-dark">Uložená šablona je k dispozici</span>
-      <span class="text-neutral-600"> — při nové faktuře se zeptáme, zda ji použít.</span>
+      <span class="text-neutral-600"> — při nové faktuře se zeptáme, zda ji použít (dodavatel, odběratel, platba, položky).</span>
     </div>
 
     <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-neutral-200">
@@ -108,10 +112,18 @@
         <table class="invoice-list-table w-full min-w-[720px] border-collapse text-left">
           <thead>
             <tr class="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
-              <th class="px-5 py-3 font-semibold">Číslo</th>
-              <th class="px-5 py-3 font-semibold">Odběratel</th>
-              <th class="px-5 py-3 font-semibold">Vystaveno</th>
-              <th class="px-5 py-3 font-semibold text-right">Částka</th>
+              <th class="px-5 py-3 font-semibold">
+                <button type="button" class="sort-btn" data-sort="number">Číslo <span class="sort-indicator" aria-hidden="true"></span></button>
+              </th>
+              <th class="px-5 py-3 font-semibold">
+                <button type="button" class="sort-btn" data-sort="customer">Odběratel <span class="sort-indicator" aria-hidden="true"></span></button>
+              </th>
+              <th class="px-5 py-3 font-semibold">
+                <button type="button" class="sort-btn" data-sort="issue">Vystaveno <span class="sort-indicator" aria-hidden="true"></span></button>
+              </th>
+              <th class="px-5 py-3 font-semibold text-right">
+                <button type="button" class="sort-btn sort-btn-right" data-sort="total">Částka <span class="sort-indicator" aria-hidden="true"></span></button>
+              </th>
               <th class="px-5 py-3 font-semibold">Uloženo</th>
               <th class="px-5 py-3 font-semibold text-right">Akce</th>
             </tr>
@@ -152,10 +164,76 @@
     </div>
   </div>
 
+  <div id="export-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
+    <div id="export-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
+    <div class="relative flex min-h-full items-center justify-center p-4">
+      <div class="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
+        <h2 id="export-modal-title" class="mb-1 text-base font-bold text-neutral-900">Export faktur</h2>
+        <p class="mb-5 text-sm text-neutral-600">Vyber filtry — exportují se jen odpovídající faktury do jednoho .txt souboru.</p>
+
+        <div class="rounded-lg border border-neutral-200 bg-neutral-50/80 p-4">
+          <div class="flex flex-wrap items-end gap-x-4 gap-y-3">
+            <div class="filter-combobox min-w-[200px] flex-1">
+              <label for="export-filter-customer" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                Filtr odběratele
+              </label>
+              <div class="filter-input-wrap relative">
+                <span class="filter-input-icon" aria-hidden="true">
+                  <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  id="export-filter-customer"
+                  class="filter-input"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="Název, IČ nebo DIČ…"
+                  role="combobox"
+                  aria-expanded="false"
+                  aria-controls="export-filter-suggestions"
+                  aria-autocomplete="list"
+                />
+                <button type="button" id="export-filter-clear-customer" class="filter-clear hidden" title="Zrušit filtr odběratele" aria-label="Zrušit filtr odběratele">×</button>
+                <ul id="export-filter-suggestions" class="filter-suggestions hidden" role="listbox"></ul>
+              </div>
+            </div>
+
+            <div class="filter-date-field shrink-0">
+              <label for="export-filter-year" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                Datum vystavení
+              </label>
+              <div class="flex items-center gap-1.5">
+                <select id="export-filter-year" class="filter-select filter-select-year" title="Rok">
+                  <option value="">Rok</option>
+                </select>
+                <select id="export-filter-month" class="filter-select filter-select-month" disabled title="Měsíc">
+                  <option value="">Měsíc</option>
+                </select>
+                <select id="export-filter-day" class="filter-select filter-select-day" disabled title="Den">
+                  <option value="">Den</option>
+                </select>
+                <button type="button" id="export-filter-clear-dates" class="filter-clear-dates hidden" title="Zrušit filtr data" aria-label="Zrušit filtr data">×</button>
+              </div>
+            </div>
+          </div>
+          <p id="export-filter-count" class="mt-3 text-sm text-neutral-600">0 faktur k exportu</p>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-3">
+          <button type="button" id="export-modal-cancel" class="btn-secondary">Zrušit</button>
+          <button type="button" id="export-modal-confirm" class="btn-primary" disabled>Exportovat .txt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="pointer-events-none fixed bottom-6 right-6 z-50 hidden rounded-lg bg-neutral-800 px-4 py-3 text-sm text-white shadow-lg"></div>
 
   <script src="js/storage.js"></script>
   <script src="js/invoice-model.js"></script>
+  <script src="js/invoice-filters.js"></script>
   <script src="app-list.js"></script>
 </body>
 </html>

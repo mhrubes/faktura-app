@@ -76,7 +76,12 @@ const FakturaStorage = (() => {
 
   async function hasTemplate() {
     const template = await getTemplate();
-    return Boolean(template && (template.supplier?.name || template.payment?.accountNumber));
+    return Boolean(
+      template &&
+        (template.supplier?.name ||
+          template.customer?.name ||
+          template.payment?.accountNumber)
+    );
   }
 
   function sanitizeFilename(value) {
@@ -93,6 +98,20 @@ const FakturaStorage = (() => {
     return JSON.stringify(payload, null, 2);
   }
 
+  function invoicesToTxtContent(invoices) {
+    if (invoices.length === 1) {
+      return invoiceToTxtContent(invoices[0]);
+    }
+    const payload = {
+      type: "faktura-app-invoices",
+      version: DATA_VERSION,
+      exportedAt: new Date().toISOString(),
+      count: invoices.length,
+      data: invoices,
+    };
+    return JSON.stringify(payload, null, 2);
+  }
+
   function downloadTxt(filename, content) {
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -104,27 +123,54 @@ const FakturaStorage = (() => {
   }
 
   function downloadInvoiceTxt(invoice) {
-    const number = sanitizeFilename(invoice.invoiceNumber);
-    const filename = `faktura-${number}.txt`;
-    downloadTxt(filename, invoiceToTxtContent(invoice));
+    downloadInvoicesTxt([invoice]);
   }
 
-  function parseTxtContent(text) {
+  function downloadInvoicesTxt(invoices) {
+    if (!invoices?.length) return;
+    const filename =
+      invoices.length === 1
+        ? `faktura-${sanitizeFilename(invoices[0].invoiceNumber)}.txt`
+        : `faktury-export-${new Date().toISOString().slice(0, 10)}.txt`;
+    downloadTxt(filename, invoicesToTxtContent(invoices));
+  }
+
+  function parseInvoicesFromTxt(text) {
     const parsed = JSON.parse(text);
-    if (parsed?.type === "faktura-app-invoice" && parsed.data) {
+    if (parsed?.type === "faktura-app-invoices" && Array.isArray(parsed.data)) {
       return parsed.data;
     }
+    if (parsed?.type === "faktura-app-invoice" && parsed.data) {
+      return [parsed.data];
+    }
     if (parsed?.invoiceNumber || parsed?.supplier) {
-      return parsed;
+      return [parsed];
     }
     throw new Error("Neplatný formát souboru faktury.");
   }
 
-  async function importInvoiceFromFile(file) {
+  function parseTxtContent(text) {
+    const invoices = parseInvoicesFromTxt(text);
+    return invoices[0];
+  }
+
+  async function importInvoicesFromFile(file) {
     const text = await file.text();
-    const invoice = parseTxtContent(text);
-    if (!invoice.id) invoice.id = generateId();
-    return saveInvoice(invoice);
+    const invoices = parseInvoicesFromTxt(text);
+    const saved = [];
+
+    for (const invoice of invoices) {
+      const record = { ...invoice };
+      if (!record.id) record.id = generateId();
+      saved.push(await saveInvoice(record));
+    }
+
+    return saved;
+  }
+
+  async function importInvoiceFromFile(file) {
+    const saved = await importInvoicesFromFile(file);
+    return saved[0];
   }
 
   function getInvoiceFileLabel(invoice) {
@@ -142,9 +188,12 @@ const FakturaStorage = (() => {
     saveTemplate,
     hasTemplate,
     downloadInvoiceTxt,
+    downloadInvoicesTxt,
     downloadTxt,
     importInvoiceFromFile,
+    importInvoicesFromFile,
     parseTxtContent,
+    parseInvoicesFromTxt,
     getInvoiceFileLabel,
   };
 })();

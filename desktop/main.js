@@ -12,8 +12,8 @@ function getPaths() {
     ? path.join(__dirname, "..", "web")
     : path.join(process.resourcesPath, "web");
   const dataRoot = isDev
-    ? path.join(__dirname, "data")
-    : path.join(app.getPath("userData"), "data");
+    ? __dirname
+    : app.getPath("userData");
 
   return { webRoot, dataRoot };
 }

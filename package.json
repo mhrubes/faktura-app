@@ -2,6 +2,7 @@
   "name": "faktura-app",
   "private": true,
   "scripts": {
+    "start": "npm run start:web",
     "start:web": "npm --prefix web start",
     "start:desktop": "npm --prefix desktop start",
     "build:css": "npm --prefix web run build:css",

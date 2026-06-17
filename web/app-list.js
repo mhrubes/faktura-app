@@ -1,132 +1,25 @@
 let invoicePendingDelete = null;
 let allInvoices = [];
 let customerOptions = [];
-let customerFilter = { query: "", selected: null };
-let dateFilter = { year: "", month: "", day: "" };
-let suggestionIndex = -1;
+let listFilters = null;
+let exportFilters = null;
+let sortState = { column: null, direction: "asc" };
 
-const MONTH_NAMES = [
-  "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
-  "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec",
-];
+const SORT_COLUMNS = ["number", "customer", "issue", "total"];
 
-function normalizeText(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-function customerKey(customer = {}) {
-  return [customer.name || "", customer.ico || "", customer.dic || ""].join("|");
-}
-
-function buildCustomerOptions(invoices) {
-  const map = new Map();
-  invoices.forEach((invoice) => {
-    const customer = invoice.customer || {};
-    if (!customer.name && !customer.ico && !customer.dic) return;
-    const key = customerKey(customer);
-    if (!map.has(key)) {
-      map.set(key, {
-        name: customer.name || "",
-        ico: customer.ico || "",
-        dic: customer.dic || "",
-      });
-    }
-  });
-  return Array.from(map.values()).sort((a, b) =>
-    normalizeText(a.name).localeCompare(normalizeText(b.name), "cs")
-  );
-}
-
-function customerMatchesQuery(customer, query) {
-  const q = normalizeText(query);
-  if (!q) return true;
-  return [customer.name, customer.ico, customer.dic].some((field) =>
-    normalizeText(field).includes(q)
-  );
-}
-
-function customerEquals(a, b) {
-  return customerKey(a) === customerKey(b);
-}
-
-function getInvoiceIssueParts(invoice) {
-  const iso = invoice.dates?.issue;
-  if (!iso) return null;
-  const [year, month, day] = iso.split("-").map(Number);
-  if (!year || !month || !day) return null;
-  return { year, month, day };
-}
-
-function matchesCustomerFilter(invoice) {
-  if (customerFilter.selected) {
-    return customerEquals(invoice.customer || {}, customerFilter.selected);
-  }
-  const query = customerFilter.query.trim();
-  if (!query) return true;
-  return customerMatchesQuery(invoice.customer || {}, query);
-}
-
-function matchesDateFilter(invoice) {
-  if (!dateFilter.year && !dateFilter.month && !dateFilter.day) return true;
-
-  const parts = getInvoiceIssueParts(invoice);
-  if (!parts) return false;
-
-  if (dateFilter.year && parts.year !== Number(dateFilter.year)) return false;
-  if (dateFilter.month && parts.month !== Number(dateFilter.month)) return false;
-  if (dateFilter.day && parts.day !== Number(dateFilter.day)) return false;
-  return true;
-}
-
-function hasCustomerFilter() {
-  return Boolean(customerFilter.selected || customerFilter.query.trim());
-}
-
-function hasDateFilter() {
-  return Boolean(dateFilter.year || dateFilter.month || dateFilter.day);
-}
-
-function hasAnyFilter() {
-  return hasCustomerFilter() || hasDateFilter();
-}
-
-function getFilteredInvoices() {
-  return allInvoices.filter(
-    (invoice) => matchesCustomerFilter(invoice) && matchesDateFilter(invoice)
-  );
-}
-
-function getAvailableYears() {
-  const years = new Set();
-  allInvoices.forEach((invoice) => {
-    const parts = getInvoiceIssueParts(invoice);
-    if (parts) years.add(parts.year);
-  });
-  return Array.from(years).sort((a, b) => b - a);
-}
-
-function getAvailableMonths(year) {
-  const months = new Set();
-  allInvoices.forEach((invoice) => {
-    const parts = getInvoiceIssueParts(invoice);
-    if (parts && parts.year === Number(year)) months.add(parts.month);
-  });
-  return Array.from(months).sort((a, b) => a - b);
-}
-
-function getAvailableDays(year, month) {
-  const days = new Set();
-  allInvoices.forEach((invoice) => {
-    const parts = getInvoiceIssueParts(invoice);
-    if (parts && parts.year === Number(year) && parts.month === Number(month)) {
-      days.add(parts.day);
-    }
-  });
-  return Array.from(days).sort((a, b) => a - b);
+function formatCustomerMeta(customer) {
+  const parts = [];
+  if (customer.ico) parts.push(`<span>IČ: ${escapeHtml(customer.ico)}</span>`);
+  if (customer.dic) parts.push(`<span>DIČ: ${escapeHtml(customer.dic)}</span>`);
+  return parts.join("");
 }
 
 function fillSelect(select, placeholder, values, formatter) {
@@ -138,272 +31,369 @@ function fillSelect(select, placeholder, values, formatter) {
     option.textContent = formatter(value);
     select.appendChild(option);
   });
-  if (values.map(String).includes(current)) {
-    select.value = current;
-  } else {
-    select.value = "";
-  }
+  select.value = values.map(String).includes(current) ? current : "";
 }
 
-function updateDateSelects() {
-  const yearSelect = document.getElementById("filter-year");
-  const monthSelect = document.getElementById("filter-month");
-  const daySelect = document.getElementById("filter-day");
-  const clearDatesBtn = document.getElementById("filter-clear-dates");
+function createFilterController(config) {
+  const { ids, onChange } = config;
+  let customerFilter = { query: "", selected: null };
+  let dateFilter = { year: "", month: "", day: "" };
+  let suggestionIndex = -1;
 
-  fillSelect(yearSelect, "Rok", getAvailableYears(), (y) => y);
+  const els = {
+    customer: document.getElementById(ids.customer),
+    clearCustomer: document.getElementById(ids.clearCustomer),
+    suggestions: document.getElementById(ids.suggestions),
+    year: document.getElementById(ids.year),
+    month: document.getElementById(ids.month),
+    day: document.getElementById(ids.day),
+    clearDates: document.getElementById(ids.clearDates),
+  };
 
-  const hasYear = Boolean(dateFilter.year);
-  monthSelect.disabled = !hasYear;
-  daySelect.disabled = !hasYear || !dateFilter.month;
+  function getFiltered() {
+    return InvoiceFilters.filterInvoices(allInvoices, customerFilter, dateFilter);
+  }
 
-  if (!hasYear) {
-    dateFilter.month = "";
-    dateFilter.day = "";
-    monthSelect.innerHTML = '<option value="">Měsíc</option>';
-    daySelect.innerHTML = '<option value="">Den</option>';
-    monthSelect.value = "";
-    daySelect.value = "";
-  } else {
-    fillSelect(monthSelect, "Měsíc", getAvailableMonths(dateFilter.year), (m) => MONTH_NAMES[m - 1]);
-    dateFilter.month = monthSelect.value;
+  function updateDateSelects() {
+    fillSelect(els.year, "Rok", InvoiceFilters.getAvailableYears(allInvoices), (y) => y);
 
-    if (!dateFilter.month) {
+    const hasYear = Boolean(dateFilter.year);
+    els.month.disabled = !hasYear;
+    els.day.disabled = !hasYear || !dateFilter.month;
+
+    if (!hasYear) {
+      dateFilter.month = "";
       dateFilter.day = "";
-      daySelect.innerHTML = '<option value="">Den</option>';
-      daySelect.value = "";
+      els.month.innerHTML = '<option value="">Měsíc</option>';
+      els.day.innerHTML = '<option value="">Den</option>';
     } else {
-      fillSelect(daySelect, "Den", getAvailableDays(dateFilter.year, dateFilter.month), (d) => d);
-      dateFilter.day = daySelect.value;
+      fillSelect(
+        els.month,
+        "Měsíc",
+        InvoiceFilters.getAvailableMonths(allInvoices, dateFilter.year),
+        (m) => InvoiceFilters.MONTH_NAMES[m - 1]
+      );
+      dateFilter.month = els.month.value;
+
+      if (!dateFilter.month) {
+        dateFilter.day = "";
+        els.day.innerHTML = '<option value="">Den</option>';
+      } else {
+        fillSelect(
+          els.day,
+          "Den",
+          InvoiceFilters.getAvailableDays(allInvoices, dateFilter.year, dateFilter.month),
+          (d) => d
+        );
+        dateFilter.day = els.day.value;
+      }
     }
+
+    els.year.value = dateFilter.year;
+    if (hasYear) els.month.value = dateFilter.month;
+    if (hasYear && dateFilter.month) els.day.value = dateFilter.day;
+
+    els.clearDates.classList.toggle("hidden", !InvoiceFilters.hasDateFilter(dateFilter));
   }
 
-  yearSelect.value = dateFilter.year;
-  if (hasYear) monthSelect.value = dateFilter.month;
-  if (hasYear && dateFilter.month) daySelect.value = dateFilter.day;
+  function closeSuggestions() {
+    els.suggestions.classList.add("hidden");
+    els.suggestions.innerHTML = "";
+    els.customer.setAttribute("aria-expanded", "false");
+    suggestionIndex = -1;
+  }
 
-  clearDatesBtn.classList.toggle("hidden", !hasDateFilter());
+  function renderSuggestions() {
+    const suggestions = InvoiceFilters.getSuggestions(customerOptions, els.customer.value);
+    if (!suggestions.length) {
+      closeSuggestions();
+      return;
+    }
+
+    els.suggestions.innerHTML = suggestions
+      .map((customer, index) => {
+        const name = customer.name || "Bez názvu";
+        const meta = formatCustomerMeta(customer);
+        return `
+          <li class="filter-suggestion${index === suggestionIndex ? " is-active" : ""}" role="option" data-index="${index}">
+            <div class="filter-suggestion-name">${escapeHtml(name)}</div>
+            ${meta ? `<div class="filter-suggestion-meta">${meta}</div>` : ""}
+          </li>
+        `;
+      })
+      .join("");
+
+    els.suggestions.classList.remove("hidden");
+    els.customer.setAttribute("aria-expanded", "true");
+  }
+
+  function applySuggestion(index) {
+    const suggestions = InvoiceFilters.getSuggestions(customerOptions, els.customer.value);
+    const customer = suggestions[index];
+    if (!customer) return;
+
+    customerFilter.selected = customer;
+    customerFilter.query = "";
+    els.customer.value = customer.name || customer.ico || customer.dic || "";
+    closeSuggestions();
+    els.clearCustomer.classList.toggle("hidden", !InvoiceFilters.hasCustomerFilter(customerFilter));
+    onChange();
+  }
+
+  function syncInputsFromState() {
+    if (customerFilter.selected) {
+      els.customer.value =
+        customerFilter.selected.name ||
+        customerFilter.selected.ico ||
+        customerFilter.selected.dic ||
+        "";
+    } else {
+      els.customer.value = customerFilter.query;
+    }
+    els.clearCustomer.classList.toggle("hidden", !InvoiceFilters.hasCustomerFilter(customerFilter));
+    updateDateSelects();
+  }
+
+  function bind() {
+    els.customer.addEventListener("input", () => {
+      customerFilter.selected = null;
+      customerFilter.query = els.customer.value;
+      suggestionIndex = -1;
+      els.clearCustomer.classList.remove("hidden");
+      renderSuggestions();
+      onChange();
+    });
+
+    els.customer.addEventListener("focus", () => {
+      suggestionIndex = -1;
+      renderSuggestions();
+    });
+
+    els.customer.addEventListener("keydown", (e) => {
+      const suggestions = InvoiceFilters.getSuggestions(customerOptions, els.customer.value);
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (!suggestions.length) return;
+        suggestionIndex = Math.min(suggestionIndex + 1, suggestions.length - 1);
+        renderSuggestions();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        suggestionIndex = Math.max(suggestionIndex - 1, 0);
+        renderSuggestions();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (suggestionIndex >= 0) applySuggestion(suggestionIndex);
+        else closeSuggestions();
+      } else if (e.key === "Escape") {
+        closeSuggestions();
+      }
+    });
+
+    els.suggestions.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      const item = e.target.closest(".filter-suggestion");
+      if (item) applySuggestion(Number(item.dataset.index));
+    });
+
+    els.clearCustomer.addEventListener("click", () => {
+      customerFilter = { query: "", selected: null };
+      els.customer.value = "";
+      closeSuggestions();
+      els.clearCustomer.classList.add("hidden");
+      onChange();
+    });
+
+    els.clearDates.addEventListener("click", () => {
+      dateFilter = { year: "", month: "", day: "" };
+      updateDateSelects();
+      onChange();
+    });
+
+    els.year.addEventListener("change", () => {
+      dateFilter.year = els.year.value;
+      dateFilter.month = "";
+      dateFilter.day = "";
+      updateDateSelects();
+      onChange();
+    });
+
+    els.month.addEventListener("change", () => {
+      dateFilter.month = els.month.value;
+      dateFilter.day = "";
+      updateDateSelects();
+      onChange();
+    });
+
+    els.day.addEventListener("change", () => {
+      dateFilter.day = els.day.value;
+      updateDateSelects();
+      onChange();
+    });
+  }
+
+  return {
+    bind,
+    getFiltered,
+    getState() {
+      return {
+        customerFilter: InvoiceFilters.cloneCustomerFilter(customerFilter),
+        dateFilter: InvoiceFilters.cloneDateFilter(dateFilter),
+      };
+    },
+    closeSuggestions,
+    updateDateSelects,
+    syncFrom(source) {
+      customerFilter = InvoiceFilters.cloneCustomerFilter(source.customerFilter);
+      dateFilter = InvoiceFilters.cloneDateFilter(source.dateFilter);
+      syncInputsFromState();
+      onChange();
+    },
+    reset() {
+      customerFilter = { query: "", selected: null };
+      dateFilter = { year: "", month: "", day: "" };
+      els.customer.value = "";
+      closeSuggestions();
+      els.clearCustomer.classList.add("hidden");
+      updateDateSelects();
+      onChange();
+    },
+    clearAll() {
+      customerFilter = { query: "", selected: null };
+      dateFilter = { year: "", month: "", day: "" };
+      els.customer.value = "";
+      closeSuggestions();
+      els.clearCustomer.classList.add("hidden");
+      updateDateSelects();
+      onChange();
+    },
+  };
 }
 
-function getSuggestions(query) {
-  const q = query.trim();
-  if (!q) return customerOptions.slice(0, 8);
-  return customerOptions.filter((customer) => customerMatchesQuery(customer, q)).slice(0, 8);
-}
-
-function formatCustomerMeta(customer) {
-  const parts = [];
-  if (customer.ico) parts.push(`<span>IČ: ${escapeHtml(customer.ico)}</span>`);
-  if (customer.dic) parts.push(`<span>DIČ: ${escapeHtml(customer.dic)}</span>`);
-  return parts.join("");
-}
-
-function updateFilterUi() {
-  const input = document.getElementById("filter-customer");
-  const clearBtn = document.getElementById("filter-clear-customer");
+function updateListFilterCount() {
   const countEl = document.getElementById("filter-result-count");
-
-  clearBtn.classList.toggle("hidden", !hasCustomerFilter());
-  updateDateSelects();
-
-  const filtered = getFilteredInvoices();
+  const filtered = listFilters.getFiltered();
   const total = allInvoices.length;
-  if (!hasAnyFilter()) {
+  const { customerFilter, dateFilter } = listFilters.getState();
+  const hasFilter = InvoiceFilters.hasAnyFilter(customerFilter, dateFilter);
+
+  if (!hasFilter) {
     countEl.textContent = total ? `${total} faktur celkem` : "";
   } else {
     countEl.textContent = `${filtered.length} z ${total} faktur`;
   }
+}
 
-  if (customerFilter.selected) {
-    const label =
-      customerFilter.selected.name ||
-      customerFilter.selected.ico ||
-      customerFilter.selected.dic;
-    if (input && document.activeElement !== input) {
-      input.value = label;
+function updateExportButtonState() {
+  const btn = document.getElementById("btn-export");
+  const hasInvoices = allInvoices.length > 0;
+  btn.disabled = !hasInvoices;
+}
+
+function updateExportModalCount() {
+  const count = exportFilters.getFiltered().length;
+  const countEl = document.getElementById("export-filter-count");
+  const confirmBtn = document.getElementById("export-modal-confirm");
+
+  countEl.textContent =
+    count === 0
+      ? "Žádná faktura neodpovídá zvoleným filtrům"
+      : count === 1
+        ? "1 faktura k exportu"
+        : `${count} faktur k exportu`;
+
+  confirmBtn.disabled = count === 0;
+}
+
+function openExportModal() {
+  exportFilters.syncFrom(listFilters.getState());
+  document.getElementById("export-modal").classList.remove("hidden");
+  document.body.classList.add("overflow-hidden");
+  document.getElementById("export-filter-customer").focus();
+}
+
+function closeExportModal() {
+  exportFilters.closeSuggestions();
+  document.getElementById("export-modal").classList.add("hidden");
+  document.body.classList.remove("overflow-hidden");
+}
+
+function confirmExport() {
+  const invoices = exportFilters.getFiltered();
+  if (!invoices.length) return;
+
+  FakturaStorage.downloadInvoicesTxt(invoices);
+  showToast(
+    invoices.length === 1
+      ? "Faktura exportována do .txt souboru."
+      : `${invoices.length} faktur exportováno do jednoho .txt souboru.`
+  );
+  closeExportModal();
+}
+
+function sortInvoices(invoices) {
+  if (!sortState.column) return invoices;
+
+  const { column, direction } = sortState;
+  const factor = direction === "asc" ? 1 : -1;
+
+  return [...invoices].sort((a, b) => {
+    let cmp = 0;
+
+    if (column === "number") {
+      cmp = String(a.invoiceNumber || "").localeCompare(String(b.invoiceNumber || ""), "cs", {
+        numeric: true,
+      });
+    } else if (column === "customer") {
+      cmp = String(a.customer?.name || "").localeCompare(String(b.customer?.name || ""), "cs");
+    } else if (column === "issue") {
+      cmp = String(a.dates?.issue || "").localeCompare(String(b.dates?.issue || ""));
+    } else if (column === "total") {
+      cmp = InvoiceModel.calculateTotal(a) - InvoiceModel.calculateTotal(b);
     }
+
+    return cmp * factor;
+  });
+}
+
+function updateSortHeaderUi() {
+  document.querySelectorAll(".sort-btn[data-sort]").forEach((btn) => {
+    const isActive = btn.dataset.sort === sortState.column;
+    btn.classList.toggle("is-sorted-asc", isActive && sortState.direction === "asc");
+    btn.classList.toggle("is-sorted-desc", isActive && sortState.direction === "desc");
+    btn.setAttribute("aria-sort", isActive ? sortState.direction + "ending" : "none");
+  });
+}
+
+function handleSortClick(column) {
+  if (!SORT_COLUMNS.includes(column)) return;
+
+  if (sortState.column === column) {
+    sortState.direction = sortState.direction === "asc" ? "desc" : "asc";
+  } else {
+    sortState.column = column;
+    sortState.direction = column === "issue" || column === "total" ? "desc" : "asc";
   }
-}
 
-function closeSuggestions() {
-  const list = document.getElementById("filter-suggestions");
-  const input = document.getElementById("filter-customer");
-  list.classList.add("hidden");
-  list.innerHTML = "";
-  input?.setAttribute("aria-expanded", "false");
-  suggestionIndex = -1;
-}
-
-function renderSuggestions() {
-  const list = document.getElementById("filter-suggestions");
-  const input = document.getElementById("filter-customer");
-  const suggestions = getSuggestions(input.value);
-
-  if (!suggestions.length) {
-    closeSuggestions();
-    return;
-  }
-
-  list.innerHTML = suggestions
-    .map((customer, index) => {
-      const name = customer.name || "Bez názvu";
-      const meta = formatCustomerMeta(customer);
-      return `
-        <li
-          class="filter-suggestion${index === suggestionIndex ? " is-active" : ""}"
-          role="option"
-          data-index="${index}"
-          aria-selected="${index === suggestionIndex}"
-        >
-          <div class="filter-suggestion-name">${escapeHtml(name)}</div>
-          ${meta ? `<div class="filter-suggestion-meta">${meta}</div>` : ""}
-        </li>
-      `;
-    })
-    .join("");
-
-  list.classList.remove("hidden");
-  input.setAttribute("aria-expanded", "true");
-}
-
-function applySelectedSuggestion(index) {
-  const input = document.getElementById("filter-customer");
-  const suggestions = getSuggestions(input.value);
-  const customer = suggestions[index];
-  if (!customer) return;
-
-  customerFilter.selected = customer;
-  customerFilter.query = "";
-  input.value = customer.name || customer.ico || customer.dic || "";
-  closeSuggestions();
-  updateFilterUi();
+  updateSortHeaderUi();
   renderInvoiceRows();
 }
 
-function clearCustomerFilter() {
-  customerFilter = { query: "", selected: null };
-  const input = document.getElementById("filter-customer");
-  if (input) input.value = "";
-  closeSuggestions();
-  updateFilterUi();
-  renderInvoiceRows();
-}
-
-function clearDateFilter() {
-  dateFilter = { year: "", month: "", day: "" };
-  updateFilterUi();
-  renderInvoiceRows();
-}
-
-function clearAllFilters() {
-  customerFilter = { query: "", selected: null };
-  dateFilter = { year: "", month: "", day: "" };
-  const input = document.getElementById("filter-customer");
-  if (input) input.value = "";
-  closeSuggestions();
-  updateFilterUi();
-  renderInvoiceRows();
-}
-
-function initFilters() {
-  const input = document.getElementById("filter-customer");
-  const clearCustomerBtn = document.getElementById("filter-clear-customer");
-  const clearDatesBtn = document.getElementById("filter-clear-dates");
-  const yearSelect = document.getElementById("filter-year");
-  const monthSelect = document.getElementById("filter-month");
-  const daySelect = document.getElementById("filter-day");
-  const list = document.getElementById("filter-suggestions");
-  const clearFilterBtn = document.getElementById("btn-clear-filter");
-
-  input.addEventListener("input", () => {
-    customerFilter.selected = null;
-    customerFilter.query = input.value;
-    suggestionIndex = -1;
-    updateFilterUi();
-    renderSuggestions();
-    renderInvoiceRows();
+function initSort() {
+  document.querySelector(".invoice-list-table thead")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".sort-btn[data-sort]");
+    if (!btn) return;
+    handleSortClick(btn.dataset.sort);
   });
-
-  input.addEventListener("focus", () => {
-    suggestionIndex = -1;
-    renderSuggestions();
-  });
-
-  input.addEventListener("keydown", (e) => {
-    const suggestions = getSuggestions(input.value);
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (!suggestions.length) return;
-      suggestionIndex = Math.min(suggestionIndex + 1, suggestions.length - 1);
-      renderSuggestions();
-      return;
-    }
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      suggestionIndex = Math.max(suggestionIndex - 1, 0);
-      renderSuggestions();
-      return;
-    }
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (suggestionIndex >= 0) {
-        applySelectedSuggestion(suggestionIndex);
-      } else {
-        closeSuggestions();
-        renderInvoiceRows();
-      }
-      return;
-    }
-    if (e.key === "Escape") {
-      closeSuggestions();
-    }
-  });
-
-  list.addEventListener("mousedown", (e) => {
-    e.preventDefault();
-    const item = e.target.closest(".filter-suggestion");
-    if (!item) return;
-    applySelectedSuggestion(Number(item.dataset.index));
-  });
-
-  clearCustomerBtn.addEventListener("click", clearCustomerFilter);
-  clearDatesBtn.addEventListener("click", clearDateFilter);
-  clearFilterBtn.addEventListener("click", clearAllFilters);
-
-  yearSelect.addEventListener("change", () => {
-    dateFilter.year = yearSelect.value;
-    dateFilter.month = "";
-    dateFilter.day = "";
-    updateFilterUi();
-    renderInvoiceRows();
-  });
-
-  monthSelect.addEventListener("change", () => {
-    dateFilter.month = monthSelect.value;
-    dateFilter.day = "";
-    updateFilterUi();
-    renderInvoiceRows();
-  });
-
-  daySelect.addEventListener("change", () => {
-    dateFilter.day = daySelect.value;
-    updateFilterUi();
-    renderInvoiceRows();
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".filter-combobox")) {
-      closeSuggestions();
-    }
-  });
+  updateSortHeaderUi();
 }
 
 function renderInvoiceRows() {
   const tbody = document.getElementById("invoice-list");
   const listWrap = document.getElementById("invoice-list-wrap");
   const filterEmpty = document.getElementById("filter-empty-state");
-  const invoices = getFilteredInvoices();
-  const hasFilter = hasAnyFilter();
+  const invoices = sortInvoices(listFilters.getFiltered());
+  const { customerFilter, dateFilter } = listFilters.getState();
+  const hasFilter = InvoiceFilters.hasAnyFilter(customerFilter, dateFilter);
 
   if (!invoices.length && hasFilter) {
     tbody.innerHTML = "";
@@ -536,11 +526,12 @@ async function renderInvoiceList() {
 
   try {
     allInvoices = await FakturaStorage.readInvoices();
-    customerOptions = buildCustomerOptions(allInvoices);
+    customerOptions = InvoiceFilters.buildCustomerOptions(allInvoices);
     const hasTemplate = await FakturaStorage.hasTemplate();
 
     serverError?.classList.add("hidden");
     templateBanner.classList.toggle("hidden", !hasTemplate);
+    updateExportButtonState();
 
     if (!allInvoices.length) {
       emptyState.classList.remove("hidden");
@@ -552,7 +543,8 @@ async function renderInvoiceList() {
 
     emptyState.classList.add("hidden");
     filtersBar.classList.remove("hidden");
-    updateFilterUi();
+    listFilters.updateDateSelects();
+    updateListFilterCount();
     renderInvoiceRows();
   } catch (err) {
     showLoadError(err);
@@ -561,20 +553,14 @@ async function renderInvoiceList() {
     filtersBar?.classList.add("hidden");
     filterEmpty.classList.add("hidden");
     listWrap.classList.add("hidden");
+    updateExportButtonState();
   }
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 function initModals() {
   document.getElementById("btn-new-invoice").addEventListener("click", handleNewInvoice);
   document.getElementById("btn-new-empty").addEventListener("click", () => navigateToNewInvoice("empty"));
+  document.getElementById("btn-export").addEventListener("click", openExportModal);
 
   document.getElementById("template-modal-use").addEventListener("click", () => {
     closeTemplateModal();
@@ -590,10 +576,26 @@ function initModals() {
   document.getElementById("delete-modal-confirm").addEventListener("click", confirmDelete);
   document.getElementById("delete-modal-backdrop").addEventListener("click", closeDeleteModal);
 
+  document.getElementById("export-modal-cancel").addEventListener("click", closeExportModal);
+  document.getElementById("export-modal-confirm").addEventListener("click", confirmExport);
+  document.getElementById("export-modal-backdrop").addEventListener("click", closeExportModal);
+
+  document.getElementById("btn-clear-filter").addEventListener("click", () => listFilters.clearAll());
+
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
+    if (!document.getElementById("export-modal").classList.contains("hidden")) closeExportModal();
     if (!document.getElementById("template-modal").classList.contains("hidden")) closeTemplateModal();
     if (!document.getElementById("delete-modal").classList.contains("hidden")) closeDeleteModal();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#filter-customer") && !e.target.closest("#filter-suggestions")) {
+      listFilters.closeSuggestions();
+    }
+    if (!e.target.closest("#export-filter-customer") && !e.target.closest("#export-filter-suggestions")) {
+      exportFilters.closeSuggestions();
+    }
   });
 }
 
@@ -631,8 +633,12 @@ function initImport() {
     if (!file) return;
 
     try {
-      await FakturaStorage.importInvoiceFromFile(file);
-      showToast("Faktura importována do data/invoices.");
+      const saved = await FakturaStorage.importInvoicesFromFile(file);
+      showToast(
+        saved.length === 1
+          ? "1 faktura importována do data/invoices."
+          : `${saved.length} faktur importováno do data/invoices.`
+      );
       await renderInvoiceList();
     } catch (err) {
       alert(err.message || "Import se nezdařil.");
@@ -640,9 +646,44 @@ function initImport() {
   });
 }
 
+function initFilters() {
+  listFilters = createFilterController({
+    ids: {
+      customer: "filter-customer",
+      clearCustomer: "filter-clear-customer",
+      suggestions: "filter-suggestions",
+      year: "filter-year",
+      month: "filter-month",
+      day: "filter-day",
+      clearDates: "filter-clear-dates",
+    },
+    onChange: () => {
+      updateListFilterCount();
+      renderInvoiceRows();
+    },
+  });
+
+  exportFilters = createFilterController({
+    ids: {
+      customer: "export-filter-customer",
+      clearCustomer: "export-filter-clear-customer",
+      suggestions: "export-filter-suggestions",
+      year: "export-filter-year",
+      month: "export-filter-month",
+      day: "export-filter-day",
+      clearDates: "export-filter-clear-dates",
+    },
+    onChange: updateExportModalCount,
+  });
+
+  listFilters.bind();
+  exportFilters.bind();
+}
+
 async function init() {
-  initModals();
   initFilters();
+  initSort();
+  initModals();
   initListActions();
   initImport();
   await renderInvoiceList();

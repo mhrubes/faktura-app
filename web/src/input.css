@@ -197,6 +197,29 @@
     @apply border-b-0;
   }
 
+  .sort-btn {
+    @apply inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-xs font-semibold uppercase tracking-wide text-neutral-500 transition hover:text-brand;
+  }
+
+  .sort-btn-right {
+    @apply ml-auto;
+  }
+
+  .sort-indicator::after {
+    content: "↕";
+    @apply text-[10px] font-normal text-neutral-300;
+  }
+
+  .sort-btn.is-sorted-asc .sort-indicator::after {
+    content: "↑";
+    @apply text-brand;
+  }
+
+  .sort-btn.is-sorted-desc .sort-indicator::after {
+    content: "↓";
+    @apply text-brand;
+  }
+
   .filter-input-wrap {
     @apply relative;
   }
@@ -263,6 +286,23 @@
 
   .filter-select:focus:not(:disabled) {
     @apply border-brand ring-2 ring-brand/20;
+  }
+
+  .btn-tooltip-wrap {
+    @apply relative inline-flex;
+  }
+
+  .btn-tooltip-wrap .btn-tooltip {
+    @apply pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-max max-w-[220px] -translate-x-1/2 rounded-md bg-neutral-800 px-2.5 py-1.5 text-center text-xs text-white shadow-lg;
+  }
+
+  .btn-tooltip-wrap:has(button:disabled):hover .btn-tooltip {
+    @apply block;
+  }
+
+  .btn-tooltip-wrap .btn-tooltip::after {
+    content: "";
+    @apply absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-neutral-800;
   }
 }
 

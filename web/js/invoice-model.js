@@ -154,13 +154,16 @@ const InvoiceModel = (() => {
     return {
       ...invoice,
       supplier: { ...invoice.supplier, ...template.supplier },
+      customer: { ...invoice.customer, ...template.customer },
       payment: { ...invoice.payment, ...template.payment },
+      items: template.items?.length ? template.items.map((item) => ({ ...item })) : invoice.items,
     };
   }
 
   function extractTemplateFromInvoice(invoice) {
     return {
       supplier: { ...invoice.supplier },
+      customer: { ...invoice.customer },
       payment: {
         accountNumber: invoice.payment?.accountNumber || "",
         iban: invoice.payment?.iban || "",
@@ -168,6 +171,7 @@ const InvoiceModel = (() => {
         constantSymbol: invoice.payment?.constantSymbol || "",
         method: invoice.payment?.method || "Převodem",
       },
+      items: (invoice.items || []).map((item) => ({ ...item })),
     };
   }
 
