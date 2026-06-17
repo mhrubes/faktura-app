@@ -176,6 +176,26 @@
   .pdf-text-replacement {
     @apply inline text-inherit;
   }
+
+  .btn-primary {
+    @apply cursor-pointer rounded border border-brand bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-dark;
+  }
+
+  .btn-secondary {
+    @apply cursor-pointer rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50;
+  }
+
+  .btn-danger {
+    @apply cursor-pointer rounded border border-red-600 bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700;
+  }
+
+  .btn-table {
+    @apply cursor-pointer rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50;
+  }
+
+  .invoice-list-table tbody tr:last-child {
+    @apply border-b-0;
+  }
 }
 
 @media print {

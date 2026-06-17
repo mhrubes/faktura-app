@@ -3,240 +3,91 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Faktura</title>
+  <title>Faktury</title>
   <link rel="stylesheet" href="css/tailwind.css" />
 </head>
-<body class="m-0 bg-[#e0e0e0] p-6 font-sans text-invoice leading-snug text-neutral-900">
-  <div class="toolbar no-print mx-auto mb-4 flex max-w-[210mm] justify-end gap-3">
-    <button
-      type="button"
-      id="btn-add-row"
-      class="cursor-pointer rounded border border-neutral-400 bg-white px-[18px] py-2.5 text-sm hover:bg-neutral-100"
-    >
-      + Přidat položku
-    </button>
-    <button
-      type="button"
-      id="btn-pdf"
-      class="primary cursor-pointer rounded border border-brand bg-brand px-[18px] py-2.5 text-sm text-white hover:bg-brand-dark"
-    >
-      Stáhnout PDF
-    </button>
-  </div>
-
-  <div
-    id="invoice"
-    class="invoice mx-auto w-[210mm] min-h-[297mm] bg-white py-[12mm] pl-[8mm] pr-[10mm] pb-[14mm] shadow-[0_2px_16px_rgba(0,0,0,0.12)]"
-  >
-    <!-- IDENTIFIKAČNÍ ÚDAJE -->
-    <section class="inv-section mb-3.5 grid grid-cols-[30px_1fr] items-stretch gap-2 overflow-visible">
-      <div class="section-label"><span>IDENTIFIKAČNÍ ÚDAJE</span></div>
-      <div class="section-body min-w-0">
-        <div class="ident-columns">
-          <div class="supplier-top">
-            <h3 class="mb-1.5 text-invoice font-bold">Dodavatel</h3>
-            <input type="text" id="supplier-name" class="party-name" value="Martin Hrubeš" />
-            <input type="text" id="supplier-address" class="party-line" value="V Zahradách 619" />
-            <input type="text" id="supplier-city" class="party-line" value="270 51 Lužná" />
-            <input type="text" id="supplier-country" class="party-line" value="Česká republika" />
-            <div class="party-ids">
-              <span>IČ:</span>
-              <input type="text" id="supplier-ico" class="inline-short" value="29575214" />
-            </div>
-          </div>
-          <div class="invoice-header-row">
-            <span class="text-[22px] font-normal leading-none">Faktura</span>
-            <input type="text" id="invoice-number" class="invoice-number-box" value="20260001" />
-          </div>
-          <div class="contact-sub">
-            <strong class="mb-1 block text-invoice">Kontaktní údaje</strong>
-            <div class="contact-row">
-              <span class="whitespace-nowrap">E-mail:</span>
-              <input type="email" id="supplier-email" value="m_hrubes@centrum.cz" />
-            </div>
-            <div class="contact-row">
-              <span class="whitespace-nowrap">Telefon:</span>
-              <input type="text" id="supplier-phone" value="605525223" />
-            </div>
-          </div>
-          <div class="customer-details">
-            <h3 class="mb-1.5 mt-0 text-invoice font-bold">Odběratel</h3>
-            <input type="text" id="customer-name" class="party-name" value="Your Solutions s.r.o." />
-            <input type="text" id="customer-address" class="party-line" value="Türkova 2319/5b" />
-            <input type="text" id="customer-city" class="party-line" value="149 00 Praha" />
-            <input type="text" id="customer-country" class="party-line" value="Česká republika" />
-            <div class="party-ids">
-              <span>IČ:</span>
-              <input type="text" id="customer-ico" class="inline-short" value="22154256" />
-              <span class="ml-2">DIČ:</span>
-              <input type="text" id="customer-dic" class="inline-short" value="CZ22154256" />
-            </div>
-          </div>
-        </div>
-
-        <div class="flex flex-wrap gap-6 border-t border-[#ccc] pt-2.5 text-invoice">
-          <div class="date-item flex items-center gap-1.5">
-            <span>Datum vystavení:</span>
-            <input type="date" id="date-issue" />
-          </div>
-          <div class="date-item flex items-center gap-1.5">
-            <span>Datum splatnosti:</span>
-            <input type="date" id="date-due" />
-          </div>
-          <div class="date-item flex items-center gap-1.5">
-            <span>Číslo objednávky:</span>
-            <input type="text" id="order-number" value="6_2026" />
-          </div>
-        </div>
+<body class="m-0 min-h-screen bg-neutral-100 p-6 font-sans text-sm leading-snug text-neutral-900">
+  <div class="mx-auto max-w-5xl">
+    <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-neutral-900">Faktury</h1>
+        <p class="mt-1 text-neutral-600">Faktury se ukládají do složky <code class="text-xs">data/invoices/</code> — spusť server přes <code class="text-xs">npm start</code></p>
       </div>
-    </section>
-
-    <!-- PLATEBNÍ ÚDAJE -->
-    <section class="inv-section mb-3.5 grid grid-cols-[30px_1fr] items-stretch gap-2 overflow-visible">
-      <div class="section-label"><span>PLATEBNÍ ÚDAJE</span></div>
-      <div class="section-body min-w-0">
-        <div
-          class="payment-bar grid min-w-0 max-w-full grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto] items-center gap-2 bg-brand px-3.5 py-2.5 text-white"
-        >
-          <div class="payment-col">
-            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-              <span>Bankovní účet:</span>
-              <input type="text" id="account-number" value="372363558/0300" />
-            </div>
-            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-              <span>IBAN:</span>
-              <input type="text" id="iban" value="" />
-            </div>
-            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-              <span>SWIFT:</span>
-              <input type="text" id="swift" value="" />
-            </div>
-          </div>
-          <div class="payment-col">
-            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-              <span>Symbol</span>
-            </div>
-            <div class="payment-line indent mb-0.5 flex items-center gap-1.5 whitespace-nowrap pl-2.5 text-[10px]">
-              <span>variabilní:</span>
-              <input type="text" id="variable-symbol" value="20260001" />
-            </div>
-            <div class="payment-line indent mb-0.5 flex items-center gap-1.5 whitespace-nowrap pl-2.5 text-[10px]">
-              <span>konstantní:</span>
-              <input type="text" id="constant-symbol" value="0308" />
-            </div>
-          </div>
-          <div class="payment-col">
-            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-[10px]">
-              <span>Způsob platby:</span>
-              <select id="payment-method" class="payment-select">
-                <option value="Převodem" selected>Převodem</option>
-                <option value="Hotově">Hotově</option>
-                <option value="Kartou">Kartou</option>
-              </select>
-            </div>
-          </div>
-          <div class="payment-total-col min-w-[110px] border-l border-white/40 pl-3 text-right">
-            <span class="mb-0.5 block text-[10px]">K úhradě</span>
-            <span class="whitespace-nowrap text-lg font-bold">
-              <span id="payment-total">0,00</span> Kč
-            </span>
-          </div>
-        </div>
+      <div class="flex flex-wrap gap-3">
+        <label class="btn-secondary cursor-pointer">
+          Importovat .txt
+          <input type="file" id="import-file" accept=".txt,text/plain" class="hidden" />
+        </label>
+        <button type="button" id="btn-new-invoice" class="btn-primary">+ Nová faktura</button>
       </div>
-    </section>
+    </header>
 
-    <!-- FAKTURUJEME VÁM -->
-    <section class="inv-section mb-3.5 grid grid-cols-[30px_1fr] items-stretch gap-2 overflow-visible">
-      <div class="section-label"><span>FAKTURUJEME VÁM</span></div>
-      <div class="section-body min-w-0">
-        <p class="mb-2 text-invoice">Fakturujeme Vám za dodané zboží či služby:</p>
-        <table class="items-table w-full table-fixed border-collapse" id="items-table">
+    <div id="server-error" class="mb-6 hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"></div>
+
+    <div id="template-banner" class="mb-6 hidden rounded-lg border border-brand/30 bg-brand-light px-4 py-3 text-sm text-neutral-800">
+      <span class="font-medium text-brand-dark">Uložená šablona je k dispozici</span>
+      <span class="text-neutral-600"> — při nové faktuře se zeptáme, zda ji použít.</span>
+    </div>
+
+    <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-neutral-200">
+      <div id="empty-state" class="hidden px-6 py-16 text-center">
+        <p class="text-lg font-medium text-neutral-800">Zatím žádné faktury</p>
+        <p class="mt-2 text-neutral-600">Vytvoř novou fakturu nebo importuj existující .txt soubor.</p>
+        <button type="button" id="btn-new-empty" class="btn-primary mt-6">Vytvořit první fakturu</button>
+      </div>
+
+      <div id="invoice-list-wrap" class="overflow-x-auto">
+        <table class="invoice-list-table w-full min-w-[720px] border-collapse text-left">
           <thead>
-            <tr>
-              <th class="col-desc border border-neutral-500 bg-white p-1.5 text-left text-[10px] font-bold">Označení dodávky</th>
-              <th class="col-qty border border-neutral-500 bg-white p-1.5 text-[10px] font-bold">Počet</th>
-              <th class="col-unit border border-neutral-500 bg-white p-1.5 text-[10px] font-bold">m. j.</th>
-              <th class="col-price border border-neutral-500 bg-white p-1.5 text-[10px] font-bold">Cena za m.j.</th>
-              <th class="col-total border border-neutral-500 bg-white p-1.5 text-[10px] font-bold">Celkem</th>
-              <th class="col-action no-print border border-neutral-500 bg-white p-1.5 text-[10px] font-bold">Akce</th>
+            <tr class="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
+              <th class="px-5 py-3 font-semibold">Číslo</th>
+              <th class="px-5 py-3 font-semibold">Odběratel</th>
+              <th class="px-5 py-3 font-semibold">Vystaveno</th>
+              <th class="px-5 py-3 font-semibold text-right">Částka</th>
+              <th class="px-5 py-3 font-semibold">Uloženo</th>
+              <th class="px-5 py-3 font-semibold text-right">Akce</th>
             </tr>
           </thead>
-          <tbody id="items-body">
-            <tr class="item-row">
-              <td class="border border-neutral-500 p-1.5 align-middle text-[10px]">
-                <input
-                  type="text"
-                  class="desc"
-                  value="Odborné práce a konzultace v oblasti analýzy, návrhu, vývoje pro zákazníky klienta"
-                />
-              </td>
-              <td class="col-qty border border-neutral-500 p-1.5 align-middle text-[10px]">
-                <input type="text" class="qty numeric-cell text-right" inputmode="decimal" value="1,00" />
-              </td>
-              <td class="col-unit border border-neutral-500 p-1.5 align-middle text-[10px]">
-                <input type="text" class="unit text-center" value="1" />
-              </td>
-              <td class="col-price border border-neutral-500 p-1.5 align-middle text-[10px]">
-                <input type="text" class="unit-price numeric-cell text-right" inputmode="decimal" value="100,00" />
-              </td>
-              <td class="row-total border border-neutral-500 p-1.5 text-right text-[10px] font-bold tabular-nums">100,00</td>
-              <td class="no-print cell-action">
-                <button
-                  type="button"
-                  class="btn-remove h-6 w-6 cursor-pointer rounded border border-[#ccc] bg-white text-base leading-none text-red-600 hover:bg-red-50"
-                  title="Odebrat řádek"
-                  aria-label="Odebrat řádek"
-                >
-                  ×
-                </button>
-              </td>
-            </tr>
-          </tbody>
+          <tbody id="invoice-list"></tbody>
         </table>
       </div>
     </section>
-
-    <!-- REKAPITULACE -->
-    <section class="section-recap inv-section mt-5 grid grid-cols-[30px_1fr] items-stretch gap-2 overflow-visible">
-      <div class="section-label"><span>REKAPITULACE</span></div>
-      <div class="section-body flex min-w-0 justify-end">
-        <div class="recap-bar flex items-center gap-2.5 bg-brand px-5 py-2 text-xs text-white">
-          <span>Celkem k úhradě:</span>
-          <strong class="text-sm"><span id="grand-total">0,00</span> Kč</strong>
-        </div>
-      </div>
-    </section>
   </div>
 
-  <div id="remove-modal" class="no-print fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="remove-modal-title">
-    <div id="remove-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
+  <div id="template-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="template-modal-title">
+    <div id="template-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
     <div class="relative flex min-h-full items-center justify-center p-4">
       <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h2 id="remove-modal-title" class="mb-2 text-base font-bold text-neutral-900">Odebrat položku?</h2>
-        <p id="remove-modal-text" class="mb-6 text-sm text-neutral-600">
-          Opravdu chcete odebrat tuto položku z faktury?
+        <h2 id="template-modal-title" class="mb-2 text-base font-bold text-neutral-900">Použít uloženou šablonu?</h2>
+        <p class="mb-6 text-sm text-neutral-600">
+          Máš uloženou šablonu s údaji dodavatele a platebních informací. Chceš ji použít pro novou fakturu?
         </p>
         <div class="flex justify-end gap-3">
-          <button
-            type="button"
-            id="remove-modal-cancel"
-            class="cursor-pointer rounded border border-neutral-300 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-          >
-            Zrušit
-          </button>
-          <button
-            type="button"
-            id="remove-modal-confirm"
-            class="cursor-pointer rounded border border-red-600 bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
-          >
-            Odebrat
-          </button>
+          <button type="button" id="template-modal-empty" class="btn-secondary">Prázdná faktura</button>
+          <button type="button" id="template-modal-use" class="btn-primary">Použít šablonu</button>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="app.js"></script>
+  <div id="delete-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+    <div id="delete-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
+    <div class="relative flex min-h-full items-center justify-center p-4">
+      <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <h2 id="delete-modal-title" class="mb-2 text-base font-bold text-neutral-900">Smazat fakturu?</h2>
+        <p id="delete-modal-text" class="mb-6 text-sm text-neutral-600">Opravdu chcete tuto fakturu smazat?</p>
+        <div class="flex justify-end gap-3">
+          <button type="button" id="delete-modal-cancel" class="btn-secondary">Zrušit</button>
+          <button type="button" id="delete-modal-confirm" class="btn-danger">Smazat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="pointer-events-none fixed bottom-6 right-6 z-50 hidden rounded-lg bg-neutral-800 px-4 py-3 text-sm text-white shadow-lg"></div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/invoice-model.js"></script>
+  <script src="app-list.js"></script>
 </body>
 </html>

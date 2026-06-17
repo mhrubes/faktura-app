@@ -2,6 +2,7 @@
   "name": "faktura-app",
   "private": true,
   "scripts": {
+    "start": "node server.js",
     "build:css": "tailwindcss -i ./src/input.css -o ./css/tailwind.css --minify",
     "watch:css": "tailwindcss -i ./src/input.css -o ./css/tailwind.css --watch"
   },

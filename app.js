@@ -45,9 +45,12 @@ function formatDateCs(isoDate) {
   return `${d}.${m}.${y}`;
 }
 
-function setDefaultDates() {
-  document.getElementById("date-issue").value = "2026-06-30";
-  document.getElementById("date-due").value = "2026-07-20";
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.remove("hidden");
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => toast.classList.add("hidden"), 2800);
 }
 
 function calculateRowTotal(row) {
@@ -111,8 +114,7 @@ function initRemoveModal() {
   });
 }
 
-function createItemRow() {
-  const tbody = document.getElementById("items-body");
+function createItemRowElement(item = {}) {
   const row = document.createElement("tr");
   row.className = "item-row";
   row.innerHTML = `
@@ -120,21 +122,46 @@ function createItemRow() {
       <input type="text" class="desc" placeholder="Označení dodávky">
     </td>
     <td class="col-qty border border-neutral-500 p-1.5 align-middle text-[10px]">
-      <input type="text" class="qty numeric-cell text-right" inputmode="decimal" value="1,00">
+      <input type="text" class="qty numeric-cell text-right" inputmode="decimal">
     </td>
     <td class="col-unit border border-neutral-500 p-1.5 align-middle text-[10px]">
-      <input type="text" class="unit text-center" value="ks">
+      <input type="text" class="unit text-center">
     </td>
     <td class="col-price border border-neutral-500 p-1.5 align-middle text-[10px]">
-      <input type="text" class="unit-price numeric-cell text-right" inputmode="decimal" value="0,00">
+      <input type="text" class="unit-price numeric-cell text-right" inputmode="decimal">
     </td>
     <td class="row-total border border-neutral-500 p-1.5 text-right text-[10px] font-bold tabular-nums">0,00</td>
     <td class="no-print cell-action">
       <button type="button" class="btn-remove h-6 w-6 cursor-pointer rounded border border-[#ccc] bg-white text-base leading-none text-red-600 hover:bg-red-50" title="Odebrat řádek" aria-label="Odebrat řádek">×</button>
     </td>
   `;
+
+  row.querySelector(".desc").value = item.desc ?? "";
+  row.querySelector(".qty").value = item.qty ?? "1,00";
+  row.querySelector(".unit").value = item.unit ?? "ks";
+  row.querySelector(".unit-price").value = item.unitPrice ?? "0,00";
+  return row;
+}
+
+function createItemRow(item) {
+  const tbody = document.getElementById("items-body");
+  const row = createItemRowElement(item);
   tbody.appendChild(row);
+  formatRowNumericCells(row);
   bindRowEvents(row);
+  calculateGrandTotal();
+}
+
+function rebuildItemRows(items) {
+  const tbody = document.getElementById("items-body");
+  tbody.innerHTML = "";
+  const list = items?.length ? items : [{ desc: "", qty: "1,00", unit: "ks", unitPrice: "0,00" }];
+  list.forEach((item) => {
+    const row = createItemRowElement(item);
+    tbody.appendChild(row);
+    formatRowNumericCells(row);
+    bindRowEvents(row);
+  });
   calculateGrandTotal();
 }
 
@@ -330,14 +357,80 @@ function downloadPdf() {
     });
 }
 
-function init() {
-  setDefaultDates();
+function saveInvoice() {
+  const btn = document.getElementById("btn-save");
+  btn.disabled = true;
+  btn.textContent = "Ukládám…";
 
-  document.querySelectorAll(".item-row").forEach((row) => {
-    formatRowNumericCells(row);
-    bindRowEvents(row);
-  });
-  calculateGrandTotal();
+  const data = InvoiceModel.collectFromForm();
+  const root = document.getElementById("invoice-root");
+  if (root?.dataset.invoiceId) {
+    data.id = root.dataset.invoiceId;
+  }
+
+  FakturaStorage.saveInvoice(data)
+    .then((saved) => {
+      root.dataset.invoiceId = saved.id;
+      showToast(`Faktura uložena do data/invoices/${saved.id}.txt`);
+      document.title = `Faktura ${saved.invoiceNumber || saved.id} – editor`;
+    })
+    .catch((err) => {
+      alert(err.message || "Uložení se nezdařilo.");
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.textContent = "Uložit fakturu";
+    });
+}
+
+function saveTemplate() {
+  const btn = document.getElementById("btn-save-template");
+  btn.disabled = true;
+
+  const data = InvoiceModel.collectFromForm();
+  const template = InvoiceModel.extractTemplateFromInvoice(data);
+
+  FakturaStorage.saveTemplate(template)
+    .then(() => {
+      showToast("Šablona uložena do data/sablona.txt");
+    })
+    .catch((err) => {
+      alert(err.message || "Uložení šablony se nezdařilo.");
+    })
+    .finally(() => {
+      btn.disabled = false;
+    });
+}
+
+async function loadInvoiceFromParams() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  const mode = params.get("mode");
+
+  try {
+    if (id) {
+      const invoice = await FakturaStorage.getInvoice(id);
+      InvoiceModel.applyToForm(invoice, { rebuildRows: rebuildItemRows });
+      document.title = `Faktura ${invoice.invoiceNumber || invoice.id} – editor`;
+      return;
+    }
+
+    let invoice = InvoiceModel.defaultEmptyInvoice();
+
+    if (mode === "template" && (await FakturaStorage.hasTemplate())) {
+      const template = await FakturaStorage.getTemplate();
+      invoice = InvoiceModel.applyTemplateToInvoice(invoice, template);
+    }
+
+    InvoiceModel.applyToForm(invoice, { rebuildRows: rebuildItemRows });
+  } catch (err) {
+    alert(err.message || "Načtení faktury se nezdařilo.");
+    window.location.href = "index.html";
+  }
+}
+
+async function init() {
+  await loadInvoiceFromParams();
 
   document.getElementById("items-body").addEventListener("input", (e) => {
     if (e.target.matches(".qty, .unit-price")) {
@@ -345,8 +438,10 @@ function init() {
     }
   });
 
-  document.getElementById("btn-add-row").addEventListener("click", createItemRow);
+  document.getElementById("btn-add-row").addEventListener("click", () => createItemRow());
   document.getElementById("btn-pdf").addEventListener("click", downloadPdf);
+  document.getElementById("btn-save").addEventListener("click", saveInvoice);
+  document.getElementById("btn-save-template").addEventListener("click", saveTemplate);
   initRemoveModal();
 
   const vs = document.getElementById("variable-symbol");
