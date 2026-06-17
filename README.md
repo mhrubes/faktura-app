@@ -1,51 +1,81 @@
-# Faktura – HTML aplikace
+# Faktura – správa faktur
 
-Webová aplikace pro správu faktur, vyplnění a export do PDF. Styly jsou postavené na **Tailwind CSS**.
+Projekt obsahuje dvě verze stejné aplikace:
 
-## Instalace a spuštění
+| Složka | Typ | Popis |
+|--------|-----|-------|
+| [`web/`](web/) | Webová aplikace | Spustíš v prohlížeči přes lokální server |
+| [`desktop/`](desktop/) | Desktopová aplikace | Electron — okno jako běžný program v PC |
+
+Obě verze sdílejí stejné rozhraní, funkce i formát `.txt` souborů.
+
+---
+
+## Webová verze (`web/`)
 
 ```bash
+cd web
 npm install
 npm run build:css
 npm start
 ```
 
-Poté otevři v prohlížeči: **http://localhost:3000**
+Otevři **http://localhost:3000**
 
-> Aplikace musí běžet přes lokální server (`npm start`). Přímé otevření `index.html` z disku nefunguje — prohlížeč nemůže zapisovat soubory do projektu.
+Data se ukládají do `web/data/invoices/` a šablona do `web/data/sablona.txt`.
 
-Při úpravě stylů spusť sledování změn:
+---
+
+## Desktopová verze (`desktop/`)
+
+Nativní okno bez prohlížeče — vhodné pro běžné používání na PC.
+
+### Vývoj / spuštění
 
 ```bash
-npm run watch:css
+cd web
+npm install
+npm run build:css
+
+cd ../desktop
+npm install
+npm start
 ```
 
-## Kde se ukládají data
+Data při vývoji: `desktop/data/`
 
-| Soubor / složka | Obsah |
-|-----------------|-------|
-| `data/invoices/*.txt` | Jedna faktura = jeden `.txt` soubor (JSON uvnitř) |
-| `data/sablona.txt` | Uložená šablona dodavatele a platebních údajů |
+### Sestavení instalovatelné aplikace (Windows)
 
-## Struktura
+```bash
+cd web
+npm run build:css
 
-| Soubor / složka | Účel |
-|-----------------|------|
-| `server.js` | Lokální server + API pro zápis souborů |
-| `index.html` | Hlavní stránka – seznam faktur |
-| `invoice.html` | Editor faktury |
-| `app-list.js` | Logika seznamu a importu |
-| `app.js` | Výpočty, formátování, export PDF |
-| `js/storage.js` | Komunikace s API serveru |
-| `js/invoice-model.js` | Serializace a načítání dat faktury |
-| `src/input.css` | Tailwind vstup + vlastní komponenty |
-| `css/tailwind.css` | Zkompilované CSS (generuje se buildem) |
+cd ../desktop
+npm install
+npm run dist
+```
+
+Výsledný soubor najdeš ve složce `desktop/dist/` (portable `.exe`).
+
+Po instalaci se data ukládají do profilu uživatele (mimo složku programu).
+
+---
+
+## Rychlé příkazy z kořene projektu
+
+```bash
+npm run start:web      # spustí webovou verzi
+npm run start:desktop  # spustí desktopovou verzi
+npm run build:css      # zkompiluje Tailwind CSS
+npm run dist:desktop   # sestaví desktop .exe
+```
+
+---
 
 ## Funkce
 
-- Seznam faktur načtených ze složky `data/invoices/`
-- Uložení faktury přímo do `.txt` souboru v projektu
-- Import faktury ze souboru `.txt`
-- Uložení šablony do `data/sablona.txt`
-- Při nové faktuře volba: použít šablonu nebo prázdný formulář
-- Export do PDF s patičkou (Vytiskl(a), číslo stránky)
+- Seznam faktur s filtry (odběratel, IČ/DIČ, datum)
+- Editor faktury a export do PDF
+- Ukládání do `.txt` souborů v projektu / v desktopové aplikaci
+- Šablona dodavatele a platebních údajů
+- Import a export faktur

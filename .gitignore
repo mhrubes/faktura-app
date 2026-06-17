@@ -1,3 +1,9 @@
 node_modules/
-data/invoices/*.txt
-data/sablona.txt
+web/node_modules/
+desktop/node_modules/
+desktop/dist/
+
+web/data/invoices/*.txt
+web/data/sablona.txt
+desktop/data/invoices/*.txt
+desktop/data/sablona.txt

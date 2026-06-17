@@ -2,13 +2,11 @@
   "name": "faktura-app",
   "private": true,
   "scripts": {
-    "start": "node server.js",
-    "build:css": "tailwindcss -i ./src/input.css -o ./css/tailwind.css --minify",
-    "watch:css": "tailwindcss -i ./src/input.css -o ./css/tailwind.css --watch"
-  },
-  "devDependencies": {
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.17"
+    "start:web": "npm --prefix web start",
+    "start:desktop": "npm --prefix desktop start",
+    "build:css": "npm --prefix web run build:css",
+    "watch:css": "npm --prefix web run watch:css",
+    "dist:desktop": "npm --prefix desktop run dist",
+    "dist:desktop:installer": "npm --prefix desktop run dist:installer"
   }
 }
