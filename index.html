@@ -36,6 +36,74 @@
         <button type="button" id="btn-new-empty" class="btn-primary mt-6">Vytvořit první fakturu</button>
       </div>
 
+      <div id="filters-bar" class="hidden border-b border-neutral-200 bg-gradient-to-r from-neutral-50 to-brand-light/30 px-5 py-4">
+        <div class="flex flex-wrap items-end gap-x-4 gap-y-3">
+          <div class="filter-combobox min-w-[220px] flex-1">
+            <label for="filter-customer" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              Filtr odběratele
+            </label>
+            <div class="filter-input-wrap relative">
+              <span class="filter-input-icon" aria-hidden="true">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                id="filter-customer"
+                class="filter-input"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Název, IČ nebo DIČ…"
+                role="combobox"
+                aria-expanded="false"
+                aria-controls="filter-suggestions"
+                aria-autocomplete="list"
+              />
+              <button type="button" id="filter-clear-customer" class="filter-clear hidden" title="Zrušit filtr odběratele" aria-label="Zrušit filtr odběratele">×</button>
+              <ul id="filter-suggestions" class="filter-suggestions hidden" role="listbox"></ul>
+            </div>
+          </div>
+
+          <div class="filter-date-field shrink-0">
+            <label for="filter-year" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              Datum vystavení
+            </label>
+            <div class="flex items-center gap-1.5">
+              <select id="filter-year" class="filter-select filter-select-year" title="Rok">
+                <option value="">Rok</option>
+              </select>
+              <select id="filter-month" class="filter-select filter-select-month" disabled title="Měsíc">
+                <option value="">Měsíc</option>
+              </select>
+              <select id="filter-day" class="filter-select filter-select-day" disabled title="Den">
+                <option value="">Den</option>
+              </select>
+              <button
+                type="button"
+                id="filter-clear-dates"
+                class="filter-clear-dates hidden"
+                title="Zrušit filtr data"
+                aria-label="Zrušit filtr data"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+          <p class="text-xs text-neutral-500">Začni psát — nabídneme odběratele podle jména, IČ nebo DIČ.</p>
+          <p id="filter-result-count" class="text-xs text-neutral-600"></p>
+        </div>
+      </div>
+
+      <div id="filter-empty-state" class="hidden px-6 py-12 text-center">
+        <p class="text-base font-medium text-neutral-800">Žádná faktura neodpovídá filtru</p>
+        <p class="mt-2 text-sm text-neutral-600">Zkus upravit filtr odběratele nebo datum vystavení.</p>
+        <button type="button" id="btn-clear-filter" class="btn-secondary mt-5">Zrušit všechny filtry</button>
+      </div>
+
       <div id="invoice-list-wrap" class="overflow-x-auto">
         <table class="invoice-list-table w-full min-w-[720px] border-collapse text-left">
           <thead>

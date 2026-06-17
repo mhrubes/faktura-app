@@ -196,6 +196,74 @@
   .invoice-list-table tbody tr:last-child {
     @apply border-b-0;
   }
+
+  .filter-input-wrap {
+    @apply relative;
+  }
+
+  .filter-input-icon {
+    @apply pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400;
+  }
+
+  .filter-input {
+    @apply w-full rounded-lg border border-neutral-300 bg-white py-2.5 pl-10 pr-10 text-sm text-neutral-900 shadow-sm outline-none transition placeholder:text-neutral-400;
+  }
+
+  .filter-input:focus {
+    @apply border-brand ring-2 ring-brand/20;
+  }
+
+  .filter-clear {
+    @apply absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-lg leading-none text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700;
+  }
+
+  .filter-suggestions {
+    @apply absolute left-0 right-0 top-[calc(100%+6px)] z-20 max-h-64 overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg;
+  }
+
+  .filter-suggestion {
+    @apply cursor-pointer px-3.5 py-2.5 transition hover:bg-brand-light;
+  }
+
+  .filter-suggestion.is-active {
+    @apply bg-brand-light;
+  }
+
+  .filter-suggestion-name {
+    @apply text-sm font-medium text-neutral-900;
+  }
+
+  .filter-suggestion-meta {
+    @apply mt-0.5 text-xs text-neutral-500;
+  }
+
+  .filter-suggestion-meta span + span::before {
+    content: " · ";
+  }
+
+  .filter-select {
+    @apply cursor-pointer rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900 shadow-sm outline-none transition disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400;
+  }
+
+  .filter-select-year {
+    @apply min-w-[76px];
+  }
+
+  .filter-select-month {
+    @apply min-w-[96px];
+  }
+
+  .filter-select-day {
+    @apply min-w-[60px];
+  }
+
+  .filter-clear-dates {
+    @apply flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-base leading-none text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700;
+  }
+
+  .filter-select:focus:not(:disabled) {
+    @apply border-brand ring-2 ring-brand/20;
+  }
 }
 
 @media print {
