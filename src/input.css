@@ -1,0 +1,193 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    @apply box-border;
+  }
+}
+
+@layer components {
+  .section-label {
+    @apply relative flex min-w-[30px] items-center justify-center overflow-visible;
+  }
+
+  .section-label span {
+    @apply absolute left-1/2 top-1/2 w-max -translate-x-1/2 -translate-y-1/2 -rotate-90 whitespace-nowrap text-2xs font-bold tracking-widest text-brand;
+  }
+
+  .section-recap .section-label {
+    @apply min-h-[72px];
+  }
+
+  .ident-columns {
+    @apply mb-3 grid grid-cols-2 grid-rows-2 gap-y-7;
+  }
+
+  .supplier-top {
+    @apply col-start-1 row-start-1 border-r border-[#d8d8d8] pr-[22px];
+  }
+
+  .contact-sub {
+    @apply col-start-1 row-start-2 mt-0 border-r border-[#d8d8d8] pr-[22px];
+  }
+
+  .invoice-header-row {
+    @apply col-start-2 row-start-1 flex items-center justify-between gap-3.5 self-start pl-[22px];
+  }
+
+  .customer-details {
+    @apply col-start-2 row-start-2 mt-0 pl-[22px];
+  }
+
+  .party-name {
+    @apply mb-0.5 block w-full border-0 bg-transparent p-0 text-invoice font-bold text-neutral-900 outline-none;
+  }
+
+  .party-line {
+    @apply mb-px block w-full border-0 bg-transparent p-0 text-invoice text-neutral-900 outline-none;
+  }
+
+  .party-ids {
+    @apply mt-1 flex flex-wrap items-center gap-1 text-invoice;
+  }
+
+  .inline-short {
+    @apply w-[90px] border-0 bg-transparent p-0 text-invoice text-neutral-900 outline-none;
+  }
+
+  .contact-row {
+    @apply mb-0.5 grid grid-cols-[52px_1fr] gap-2;
+  }
+
+  .contact-row input {
+    @apply border-0 bg-transparent p-0 text-invoice text-neutral-900 outline-none;
+  }
+
+  .date-item input {
+    @apply border-0 bg-transparent p-0 text-invoice font-bold text-neutral-900 outline-none;
+  }
+
+  .invoice-number-box {
+    @apply min-w-[110px] border border-[#b0b0b0] bg-[#ececec] px-4 py-1.5 text-center text-[13px] font-bold text-neutral-900 outline-none;
+  }
+
+  .payment-line input,
+  .payment-select {
+    @apply min-w-0 flex-1 rounded-sm border-0 bg-white/20 px-1 py-0.5 text-[10px] text-white outline-none;
+  }
+
+  .payment-line input::placeholder {
+    @apply text-white/60;
+  }
+
+  .payment-select {
+    @apply max-w-[100px] cursor-pointer;
+  }
+
+  .payment-select option {
+    @apply text-black;
+  }
+
+  .items-table input {
+    @apply w-full border-0 bg-transparent p-0.5 text-[10px] outline-none;
+  }
+
+  .items-table input:focus {
+    @apply bg-brand-light outline outline-1 outline-brand;
+  }
+
+  .supplier-top input:focus,
+  .customer-details input:focus,
+  .contact-row input:focus,
+  .date-item input:focus,
+  .invoice-number-box:focus {
+    @apply bg-brand-light outline outline-1 outline-brand;
+  }
+
+  .col-desc {
+    @apply w-auto;
+  }
+
+  .col-qty {
+    @apply w-[55px] text-right;
+  }
+
+  .col-unit {
+    @apply w-[45px] text-center;
+  }
+
+  .col-price {
+    @apply w-[75px] text-right;
+  }
+
+  .col-total {
+    @apply w-[75px] text-right;
+  }
+
+  .col-action {
+    @apply w-8 !border-0 !bg-transparent;
+  }
+
+  .item-row td {
+    @apply bg-[#f0f0f0];
+  }
+
+  .item-row td.col-action {
+    @apply bg-transparent;
+  }
+
+  .cell-action {
+    @apply !border-0 !bg-transparent p-0.5 text-center;
+  }
+
+  .pdf-exporting {
+    @apply !bg-white !p-0;
+  }
+
+  .pdf-exporting .invoice {
+    @apply m-0 h-auto min-h-0 w-[210mm] max-w-[210mm] overflow-hidden shadow-none;
+    padding: 8mm 8mm 6mm 6mm;
+  }
+
+  .pdf-exporting .inv-section {
+    @apply mb-2;
+  }
+
+  .pdf-exporting .inv-section:last-child {
+    @apply mb-0;
+  }
+
+  .pdf-exporting .section-recap .section-label {
+    @apply min-h-0;
+  }
+
+  .pdf-exporting .no-print {
+    @apply !hidden;
+  }
+
+  .pdf-date-replacement {
+    @apply font-bold;
+  }
+
+  .pdf-text-replacement {
+    @apply inline text-inherit;
+  }
+}
+
+@media print {
+  body {
+    @apply bg-white p-0;
+  }
+
+  .no-print {
+    @apply !hidden;
+  }
+
+  .invoice {
+    @apply min-h-0 w-full p-0 shadow-none;
+  }
+}
