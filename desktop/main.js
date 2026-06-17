@@ -1,19 +1,65 @@
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, shell, session } = require("electron");
 const path = require("path");
 const { createFakturaServer } = require("../web/server");
+
+// Potlačí HTTPS upgrady a služby Chromia na pozadí (často způsobují SSL chyby v terminálu)
+app.commandLine.appendSwitch("disable-background-networking");
+app.commandLine.appendSwitch("disable-component-update");
+app.commandLine.appendSwitch("disable-domain-reliability");
+app.commandLine.appendSwitch("disable-sync");
+app.commandLine.appendSwitch("disable-breakpad");
+app.commandLine.appendSwitch("log-level", "3");
+app.commandLine.appendSwitch(
+  "disable-features",
+  [
+    "TranslateUI",
+    "HttpsUpgrades",
+    "HttpsFirstModeV2",
+    "HttpsFirstBalancedMode",
+    "AutofillServerCommunication",
+    "OptimizationHints",
+    "CertificateTransparencyComponentUpdater",
+    "TrustTokens",
+    "MediaRouter",
+  ].join(",")
+);
 
 let mainWindow = null;
 let fakturaServer = null;
 let serverInfo = null;
+
+function isLocalAppUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.protocol === "http:" &&
+      (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function setupOfflineSession() {
+  session.defaultSession.webRequest.onBeforeRequest({ urls: ["<all_urls>"] }, (details, callback) => {
+    if (isLocalAppUrl(details.url)) {
+      callback({});
+      return;
+    }
+    if (details.url.startsWith("http://") || details.url.startsWith("https://")) {
+      callback({ cancel: true });
+      return;
+    }
+    callback({});
+  });
+}
 
 function getPaths() {
   const isDev = !app.isPackaged;
   const webRoot = isDev
     ? path.join(__dirname, "..", "web")
     : path.join(process.resourcesPath, "web");
-  const dataRoot = isDev
-    ? __dirname
-    : app.getPath("userData");
+  const dataRoot = isDev ? __dirname : app.getPath("userData");
 
   return { webRoot, dataRoot };
 }
@@ -41,14 +87,20 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      webSecurity: true,
     },
   });
 
-  mainWindow.loadURL(`http://localhost:${serverInfo.port}`);
+  mainWindow.loadURL(`http://127.0.0.1:${serverInfo.port}`);
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (isLocalAppUrl(url)) return { action: "allow" };
     shell.openExternal(url);
     return { action: "deny" };
+  });
+
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    if (!isLocalAppUrl(url)) event.preventDefault();
   });
 
   mainWindow.on("closed", () => {
@@ -58,6 +110,7 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   try {
+    setupOfflineSession();
     await startBackend();
     createWindow();
   } catch (err) {
