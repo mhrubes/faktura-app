@@ -88,7 +88,7 @@ const FakturaStorage = (() => {
     return String(value || "faktura").replace(/[/\\?%*:|"<>]/g, "-").trim() || "faktura";
   }
 
-  function invoiceToTxtContent(invoice) {
+  function invoiceToJsonContent(invoice) {
     const payload = {
       type: "faktura-app-invoice",
       version: DATA_VERSION,
@@ -98,9 +98,9 @@ const FakturaStorage = (() => {
     return JSON.stringify(payload, null, 2);
   }
 
-  function invoicesToTxtContent(invoices) {
+  function invoicesToJsonContent(invoices) {
     if (invoices.length === 1) {
-      return invoiceToTxtContent(invoices[0]);
+      return invoiceToJsonContent(invoices[0]);
     }
     const payload = {
       type: "faktura-app-invoices",
@@ -112,8 +112,8 @@ const FakturaStorage = (() => {
     return JSON.stringify(payload, null, 2);
   }
 
-  function downloadTxt(filename, content) {
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  function downloadJson(filename, content) {
+    const blob = new Blob([content], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -122,20 +122,20 @@ const FakturaStorage = (() => {
     URL.revokeObjectURL(url);
   }
 
-  function downloadInvoiceTxt(invoice) {
-    downloadInvoicesTxt([invoice]);
+  function downloadInvoiceJson(invoice) {
+    downloadInvoicesJson([invoice]);
   }
 
-  function downloadInvoicesTxt(invoices) {
+  function downloadInvoicesJson(invoices) {
     if (!invoices?.length) return;
     const filename =
       invoices.length === 1
-        ? `faktura-${sanitizeFilename(invoices[0].invoiceNumber)}.txt`
-        : `faktury-export-${new Date().toISOString().slice(0, 10)}.txt`;
-    downloadTxt(filename, invoicesToTxtContent(invoices));
+        ? `faktura-${sanitizeFilename(invoices[0].invoiceNumber)}.json`
+        : `faktury-export-${new Date().toISOString().slice(0, 10)}.json`;
+    downloadJson(filename, invoicesToJsonContent(invoices));
   }
 
-  function parseInvoicesFromTxt(text) {
+  function parseInvoicesFromJson(text) {
     const parsed = JSON.parse(text);
     if (parsed?.type === "faktura-app-invoices" && Array.isArray(parsed.data)) {
       return parsed.data;
@@ -149,14 +149,14 @@ const FakturaStorage = (() => {
     throw new Error("Neplatný formát souboru faktury.");
   }
 
-  function parseTxtContent(text) {
-    const invoices = parseInvoicesFromTxt(text);
+  function parseJsonContent(text) {
+    const invoices = parseInvoicesFromJson(text);
     return invoices[0];
   }
 
   async function importInvoicesFromFile(file) {
     const text = await file.text();
-    const invoices = parseInvoicesFromTxt(text);
+    const invoices = parseInvoicesFromJson(text);
     const saved = [];
 
     for (const invoice of invoices) {
@@ -174,7 +174,7 @@ const FakturaStorage = (() => {
   }
 
   function getInvoiceFileLabel(invoice) {
-    return `${invoice.id}.txt`;
+    return `${invoice.id}.json`;
   }
 
   return {
@@ -187,13 +187,13 @@ const FakturaStorage = (() => {
     getTemplate,
     saveTemplate,
     hasTemplate,
-    downloadInvoiceTxt,
-    downloadInvoicesTxt,
-    downloadTxt,
+    downloadInvoiceJson,
+    downloadInvoicesJson,
+    downloadJson,
     importInvoiceFromFile,
     importInvoicesFromFile,
-    parseTxtContent,
-    parseInvoicesFromTxt,
+    parseJsonContent,
+    parseInvoicesFromJson,
     getInvoiceFileLabel,
   };
 })();

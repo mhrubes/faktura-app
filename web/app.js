@@ -371,7 +371,7 @@ function saveInvoice() {
   FakturaStorage.saveInvoice(data)
     .then((saved) => {
       root.dataset.invoiceId = saved.id;
-      showToast(`Faktura uložena do data/invoices/${saved.id}.txt`);
+      showToast(`Faktura uložena do data/invoices/${saved.id}.json`);
       document.title = `Faktura ${saved.invoiceNumber || saved.id} – editor`;
     })
     .catch((err) => {
@@ -392,7 +392,7 @@ function saveTemplate() {
 
   FakturaStorage.saveTemplate(template)
     .then(() => {
-      showToast("Šablona uložena do data/sablona.txt");
+      showToast("Šablona uložena do data/sablona.json");
     })
     .catch((err) => {
       alert(err.message || "Uložení šablony se nezdařilo.");

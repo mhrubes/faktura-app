@@ -30,8 +30,8 @@
         "filter": [
           "**/*",
           "!node_modules/**",
-          "!data/invoices/*.txt",
-          "!data/sablona.txt"
+          "!data/invoices/*.json",
+          "!data/sablona.json"
         ]
       }
     ],

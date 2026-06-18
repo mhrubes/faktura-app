@@ -17,7 +17,7 @@ function createFakturaServer(options = {}) {
   const staticRoot = options.staticRoot || __dirname;
   const dataRoot = options.dataRoot || __dirname;
   const invoicesDir = path.join(dataRoot, "data", "invoices");
-  const templateFile = path.join(dataRoot, "data", "sablona.txt");
+  const templateFile = path.join(dataRoot, "data", "sablona.json");
   let listenPort =
     options.port !== undefined ? Number(options.port) : Number(process.env.PORT) || 3000;
 
@@ -54,10 +54,16 @@ function createFakturaServer(options = {}) {
   function invoiceFilePath(id) {
     const safe = safeId(id);
     if (!safe) throw new Error("Chybí ID faktury.");
+    return path.join(invoicesDir, `${safe}.json`);
+  }
+
+  function legacyInvoiceFilePath(id) {
+    const safe = safeId(id);
+    if (!safe) throw new Error("Chybí ID faktury.");
     return path.join(invoicesDir, `${safe}.txt`);
   }
 
-  function invoiceToTxtContent(invoice) {
+  function invoiceToJsonContent(invoice) {
     return JSON.stringify(
       {
         type: "faktura-app-invoice",
@@ -70,7 +76,7 @@ function createFakturaServer(options = {}) {
     );
   }
 
-  function templateToTxtContent(template) {
+  function templateToJsonContent(template) {
     return JSON.stringify(
       {
         type: "faktura-app-template",
@@ -101,21 +107,65 @@ function createFakturaServer(options = {}) {
     await fs.mkdir(invoicesDir, { recursive: true });
   }
 
+  async function migrateLegacyDataFiles() {
+    const legacyTemplate = path.join(dataRoot, "data", "sablona.txt");
+    try {
+      await fs.access(legacyTemplate);
+      try {
+        await fs.access(templateFile);
+      } catch {
+        await fs.rename(legacyTemplate, templateFile);
+      }
+    } catch {
+      // žádná stará šablona
+    }
+
+    let files = [];
+    try {
+      files = await fs.readdir(invoicesDir);
+    } catch {
+      return;
+    }
+
+    for (const file of files) {
+      if (!file.endsWith(".txt")) continue;
+      const jsonName = file.replace(/\.txt$/i, ".json");
+      const from = path.join(invoicesDir, file);
+      const to = path.join(invoicesDir, jsonName);
+      try {
+        await fs.access(to);
+        await fs.unlink(from);
+      } catch {
+        await fs.rename(from, to);
+      }
+    }
+  }
+
   async function readInvoiceById(id) {
-    const filePath = invoiceFilePath(id);
-    const content = await fs.readFile(filePath, "utf-8");
-    return parseInvoiceContent(content);
+    try {
+      const content = await fs.readFile(invoiceFilePath(id), "utf-8");
+      return parseInvoiceContent(content);
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+      const content = await fs.readFile(legacyInvoiceFilePath(id), "utf-8");
+      return parseInvoiceContent(content);
+    }
   }
 
   async function listInvoices() {
     const files = await fs.readdir(invoicesDir);
     const invoices = [];
+    const seen = new Set();
 
     for (const file of files) {
-      if (!file.endsWith(".txt")) continue;
+      if (!file.endsWith(".json") && !file.endsWith(".txt")) continue;
       try {
-        const content = await fs.readFile(path.join(invoicesDir, file), "utf-8");
-        invoices.push(parseInvoiceContent(content));
+        const invoice = parseInvoiceContent(
+          await fs.readFile(path.join(invoicesDir, file), "utf-8")
+        );
+        if (seen.has(invoice.id)) continue;
+        seen.add(invoice.id);
+        invoices.push(invoice);
       } catch {
         // poškozený soubor přeskočíme
       }
@@ -151,12 +201,28 @@ function createFakturaServer(options = {}) {
       updatedAt: now,
     };
 
-    await fs.writeFile(invoiceFilePath(id), invoiceToTxtContent(record), "utf-8");
+    await fs.writeFile(invoiceFilePath(id), invoiceToJsonContent(record), "utf-8");
+
+    try {
+      await fs.unlink(legacyInvoiceFilePath(id));
+    } catch {
+      // starý .txt soubor nemusí existovat
+    }
+
     return record;
   }
 
   async function deleteInvoiceById(id) {
-    await fs.unlink(invoiceFilePath(id));
+    try {
+      await fs.unlink(invoiceFilePath(id));
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+    }
+    try {
+      await fs.unlink(legacyInvoiceFilePath(id));
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+    }
   }
 
   async function readTemplate() {
@@ -176,7 +242,15 @@ function createFakturaServer(options = {}) {
       savedAt: new Date().toISOString(),
     };
     await fs.mkdir(path.dirname(templateFile), { recursive: true });
-    await fs.writeFile(templateFile, templateToTxtContent(record), "utf-8");
+    await fs.writeFile(templateFile, templateToJsonContent(record), "utf-8");
+
+    const legacyTemplate = path.join(dataRoot, "data", "sablona.txt");
+    try {
+      await fs.unlink(legacyTemplate);
+    } catch {
+      // starý .txt soubor nemusí existovat
+    }
+
     return record;
   }
 
@@ -293,6 +367,7 @@ function createFakturaServer(options = {}) {
     },
     async start() {
       await ensureDataDirs();
+      await migrateLegacyDataFiles();
       return new Promise((resolve, reject) => {
         server.once("error", reject);
         server.listen(listenPort, () => {

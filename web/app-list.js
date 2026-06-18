@@ -321,11 +321,11 @@ function confirmExport() {
   const invoices = exportFilters.getFiltered();
   if (!invoices.length) return;
 
-  FakturaStorage.downloadInvoicesTxt(invoices);
+  FakturaStorage.downloadInvoicesJson(invoices);
   showToast(
     invoices.length === 1
-      ? "Faktura exportována do .txt souboru."
-      : `${invoices.length} faktur exportováno do jednoho .txt souboru.`
+      ? "Faktura exportována do .json souboru."
+      : `${invoices.length} faktur exportováno do jednoho .json souboru.`
   );
   closeExportModal();
 }
@@ -427,7 +427,7 @@ function renderInvoiceRows() {
           <td class="px-5 py-4">
             <div class="flex justify-end gap-2">
               <a href="invoice.html?id=${encodeURIComponent(summary.id)}" class="btn-table">Otevřít</a>
-              <button type="button" class="btn-table btn-download" data-id="${summary.id}">Exportovat .txt</button>
+              <button type="button" class="btn-table btn-download" data-id="${summary.id}">Exportovat .json</button>
               <button type="button" class="btn-table btn-delete text-red-600 hover:bg-red-50 hover:text-red-700" data-id="${summary.id}">Smazat</button>
             </div>
           </td>
@@ -605,7 +605,7 @@ function initListActions() {
     if (downloadBtn) {
       try {
         const invoice = await FakturaStorage.getInvoice(downloadBtn.dataset.id);
-        FakturaStorage.downloadInvoiceTxt(invoice);
+        FakturaStorage.downloadInvoiceJson(invoice);
         showToast("Kopie faktury exportována.");
       } catch (err) {
         alert(err.message || "Export se nezdařil.");

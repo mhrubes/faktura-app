@@ -15,8 +15,8 @@
       </div>
       <div class="flex flex-wrap gap-3">
         <label class="btn-secondary cursor-pointer">
-          Importovat .txt
-          <input type="file" id="import-file" accept=".txt,text/plain" class="hidden" />
+          Importovat .json
+          <input type="file" id="import-file" accept=".json,application/json,.txt,text/plain" class="hidden" />
         </label>
         <span class="btn-tooltip-wrap" id="export-btn-wrap">
           <button type="button" id="btn-export" class="btn-secondary" disabled>Exportovat</button>
@@ -36,7 +36,7 @@
     <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-neutral-200">
       <div id="empty-state" class="hidden px-6 py-16 text-center">
         <p class="text-lg font-medium text-neutral-800">Zatím žádné faktury</p>
-        <p class="mt-2 text-neutral-600">Vytvoř novou fakturu nebo importuj existující .txt soubor.</p>
+        <p class="mt-2 text-neutral-600">Vytvoř novou fakturu nebo importuj existující .json soubor.</p>
         <button type="button" id="btn-new-empty" class="btn-primary mt-6">Vytvořit první fakturu</button>
       </div>
 
@@ -169,7 +169,7 @@
     <div class="relative flex min-h-full items-center justify-center p-4">
       <div class="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
         <h2 id="export-modal-title" class="mb-1 text-base font-bold text-neutral-900">Export faktur</h2>
-        <p class="mb-5 text-sm text-neutral-600">Vyber filtry — exportují se jen odpovídající faktury do jednoho .txt souboru.</p>
+        <p class="mb-5 text-sm text-neutral-600">Vyber filtry — exportují se jen odpovídající faktury do jednoho .json souboru.</p>
 
         <div class="rounded-lg border border-neutral-200 bg-neutral-50/80 p-4">
           <div class="flex flex-wrap items-end gap-x-4 gap-y-3">
@@ -223,7 +223,7 @@
 
         <div class="mt-6 flex justify-end gap-3">
           <button type="button" id="export-modal-cancel" class="btn-secondary">Zrušit</button>
-          <button type="button" id="export-modal-confirm" class="btn-primary" disabled>Exportovat .txt</button>
+          <button type="button" id="export-modal-confirm" class="btn-primary" disabled>Exportovat .json</button>
         </div>
       </div>
     </div>

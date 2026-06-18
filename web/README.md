@@ -14,7 +14,7 @@ Otevři **http://localhost:3000**
 
 | Soubor / složka | Obsah |
 |-----------------|-------|
-| `data/invoices/*.txt` | Uložené faktury |
-| `data/sablona.txt` | Šablona dodavatele |
+| `data/invoices/*.json` | Uložené faktury |
+| `data/sablona.json` | Šablona dodavatele |
 
 Kořenový README popisuje i desktopovou verzi v `../desktop/`.

@@ -3,7 +3,7 @@ web/node_modules/
 desktop/node_modules/
 desktop/dist/
 
-web/data/invoices/*.txt
-web/data/sablona.txt
-desktop/data/invoices/*.txt
-desktop/data/sablona.txt
+web/data/invoices/*.json
+web/data/sablona.json
+desktop/data/invoices/*.json
+desktop/data/sablona.json

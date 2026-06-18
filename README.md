@@ -7,7 +7,7 @@ Projekt obsahuje dvě verze stejné aplikace:
 | [`web/`](web/) | Webová aplikace | Spustíš v prohlížeči přes lokální server |
 | [`desktop/`](desktop/) | Desktopová aplikace | Electron — okno jako běžný program v PC |
 
-Obě verze sdílejí stejné rozhraní, funkce i formát `.txt` souborů.
+Obě verze sdílejí stejné rozhraní, funkce i formát `.json` souborů.
 
 ---
 
@@ -22,7 +22,7 @@ npm start
 
 Otevři **http://localhost:3000**
 
-Data se ukládají do `web/data/invoices/` a šablona do `web/data/sablona.txt`.
+Data se ukládají do `web/data/invoices/` a šablona do `web/data/sablona.json`.
 
 ---
 
@@ -76,6 +76,6 @@ npm run dist:desktop   # sestaví desktop .exe
 
 - Seznam faktur s filtry (odběratel, IČ/DIČ, datum)
 - Editor faktury a export do PDF
-- Ukládání do `.txt` souborů v projektu / v desktopové aplikaci
+- Ukládání do `.json` souborů v projektu / v desktopové aplikaci
 - Šablona dodavatele a platebních údajů
 - Import a export faktur
