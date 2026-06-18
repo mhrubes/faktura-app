@@ -61,7 +61,7 @@
             </div>
           </div>
           <div class="invoice-header-row">
-            <span class="text-[22px] font-normal leading-none">Faktura</span>
+            <span class="text-invoice-title font-normal leading-none">Faktura</span>
             <input type="text" id="invoice-number" class="invoice-number-box" value="" />
           </div>
           <div class="contact-sub">
@@ -114,34 +114,34 @@
           class="payment-bar grid min-w-0 max-w-full grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto] items-center gap-2 bg-brand px-3.5 py-2.5 text-white"
         >
           <div class="payment-col">
-            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-[10px]">
+            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-invoice-sm">
               <span>Bankovní účet:</span>
               <input type="text" id="account-number" value="" />
             </div>
-            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-[10px]">
+            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-invoice-sm">
               <span>IBAN:</span>
               <input type="text" id="iban" value="" />
             </div>
-            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-[10px]">
+            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-invoice-sm">
               <span>SWIFT:</span>
               <input type="text" id="swift" value="" />
             </div>
           </div>
           <div class="payment-col">
-            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-[10px]">
+            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-invoice-sm">
               <span>Symbol</span>
             </div>
-            <div class="payment-line indent mb-0.5 flex items-center gap-1.5 whitespace-nowrap pl-2.5 text-[10px]">
+            <div class="payment-line indent mb-0.5 flex items-center gap-1.5 whitespace-nowrap pl-2.5 text-invoice-sm">
               <span>variabilní:</span>
               <input type="text" id="variable-symbol" value="" />
             </div>
-            <div class="payment-line indent mb-0.5 flex items-center gap-1.5 whitespace-nowrap pl-2.5 text-[10px]">
+            <div class="payment-line indent mb-0.5 flex items-center gap-1.5 whitespace-nowrap pl-2.5 text-invoice-sm">
               <span>konstantní:</span>
               <input type="text" id="constant-symbol" value="" />
             </div>
           </div>
           <div class="payment-col">
-            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-[10px]">
+            <div class="payment-line mb-0.5 flex items-center gap-1.5 whitespace-nowrap text-invoice-sm">
               <span>Způsob platby:</span>
               <select id="payment-method" class="payment-select">
                 <option value="Převodem" selected>Převodem</option>
@@ -151,8 +151,8 @@
             </div>
           </div>
           <div class="payment-total-col min-w-[110px] border-l border-white/40 pl-3 text-right">
-            <span class="mb-0.5 block text-[10px]">K úhradě</span>
-            <span class="whitespace-nowrap text-lg font-bold">
+            <span class="mb-0.5 block text-invoice-sm">K úhradě</span>
+            <span class="whitespace-nowrap text-xl font-bold">
               <span id="payment-total">0,00</span> Kč
             </span>
           </div>
@@ -167,12 +167,12 @@
         <table class="items-table w-full table-fixed border-collapse" id="items-table">
           <thead>
             <tr>
-              <th class="col-desc border border-neutral-500 bg-white p-1.5 text-left text-[10px] font-bold">Označení dodávky</th>
-              <th class="col-qty border border-neutral-500 bg-white p-1.5 text-[10px] font-bold">Počet</th>
-              <th class="col-unit border border-neutral-500 bg-white p-1.5 text-[10px] font-bold">m. j.</th>
-              <th class="col-price border border-neutral-500 bg-white p-1.5 text-[10px] font-bold">Cena za m.j.</th>
-              <th class="col-total border border-neutral-500 bg-white p-1.5 text-[10px] font-bold">Celkem</th>
-              <th class="col-action no-print border border-neutral-500 bg-white p-1.5 text-[10px] font-bold">Akce</th>
+              <th class="col-desc border border-neutral-500 bg-white p-1.5 text-left text-invoice-sm font-bold">Označení dodávky</th>
+              <th class="col-qty border border-neutral-500 bg-white p-1.5 text-invoice-sm font-bold">Počet</th>
+              <th class="col-unit border border-neutral-500 bg-white p-1.5 text-invoice-sm font-bold">m. j.</th>
+              <th class="col-price border border-neutral-500 bg-white p-1.5 text-invoice-sm font-bold">Cena za m.j.</th>
+              <th class="col-total border border-neutral-500 bg-white p-1.5 text-invoice-sm font-bold">Celkem</th>
+              <th class="col-action no-print border border-neutral-500 bg-white p-1.5 text-invoice-sm font-bold">Akce</th>
             </tr>
           </thead>
           <tbody id="items-body"></tbody>
@@ -183,9 +183,9 @@
     <section class="section-recap inv-section mt-5 grid grid-cols-[30px_1fr] items-stretch gap-2 overflow-visible">
       <div class="section-label"><span>REKAPITULACE</span></div>
       <div class="section-body flex min-w-0 justify-end">
-        <div class="recap-bar flex items-center gap-2.5 bg-brand px-5 py-2 text-xs text-white">
+        <div class="recap-bar flex items-center gap-2.5 bg-brand px-5 py-2 text-sm text-white">
           <span>Celkem k úhradě:</span>
-          <strong class="text-sm"><span id="grand-total">0,00</span> Kč</strong>
+          <strong class="text-base"><span id="grand-total">0,00</span> Kč</strong>
         </div>
       </div>
     </section>

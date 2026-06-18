@@ -72,12 +72,12 @@
   }
 
   .invoice-number-box {
-    @apply min-w-[110px] border border-[#b0b0b0] bg-[#ececec] px-4 py-1.5 text-center text-[13px] font-bold text-neutral-900 outline-none;
+    @apply min-w-[110px] border border-[#b0b0b0] bg-[#ececec] px-4 py-1.5 text-center text-invoice-num font-bold text-neutral-900 outline-none;
   }
 
   .payment-line input,
   .payment-select {
-    @apply min-w-0 flex-1 rounded-sm border-0 bg-white/20 px-1 py-0.5 text-[10px] text-white outline-none;
+    @apply min-w-0 flex-1 rounded-sm border-0 bg-white/20 px-1 py-0.5 text-invoice-sm text-white outline-none;
   }
 
   .payment-line input::placeholder {
@@ -93,7 +93,7 @@
   }
 
   .items-table input {
-    @apply w-full border-0 bg-transparent p-0.5 text-[10px] outline-none;
+    @apply w-full border-0 bg-transparent p-0.5 text-invoice-sm outline-none;
   }
 
   .items-table input:focus {

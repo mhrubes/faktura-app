@@ -118,19 +118,19 @@ function createItemRowElement(item = {}) {
   const row = document.createElement("tr");
   row.className = "item-row";
   row.innerHTML = `
-    <td class="border border-neutral-500 p-1.5 align-middle text-[10px]">
+    <td class="border border-neutral-500 p-1.5 align-middle text-invoice-sm">
       <input type="text" class="desc" placeholder="Označení dodávky">
     </td>
-    <td class="col-qty border border-neutral-500 p-1.5 align-middle text-[10px]">
+    <td class="col-qty border border-neutral-500 p-1.5 align-middle text-invoice-sm">
       <input type="text" class="qty numeric-cell text-right" inputmode="decimal">
     </td>
-    <td class="col-unit border border-neutral-500 p-1.5 align-middle text-[10px]">
+    <td class="col-unit border border-neutral-500 p-1.5 align-middle text-invoice-sm">
       <input type="text" class="unit text-center">
     </td>
-    <td class="col-price border border-neutral-500 p-1.5 align-middle text-[10px]">
+    <td class="col-price border border-neutral-500 p-1.5 align-middle text-invoice-sm">
       <input type="text" class="unit-price numeric-cell text-right" inputmode="decimal">
     </td>
-    <td class="row-total border border-neutral-500 p-1.5 text-right text-[10px] font-bold tabular-nums">0,00</td>
+    <td class="row-total border border-neutral-500 p-1.5 text-right text-invoice-sm font-bold tabular-nums">0,00</td>
     <td class="no-print cell-action">
       <button type="button" class="btn-remove h-6 w-6 cursor-pointer rounded border border-[#ccc] bg-white text-base leading-none text-red-600 hover:bg-red-50" title="Odebrat řádek" aria-label="Odebrat řádek">×</button>
     </td>
@@ -282,7 +282,7 @@ function addPdfFooters(pdf) {
   const lineY = footerY - 3;
 
   pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8);
+  pdf.setFontSize(9);
   pdf.setTextColor(90, 90, 90);
   pdf.setDrawColor(210, 210, 210);
   pdf.setLineWidth(0.2);
