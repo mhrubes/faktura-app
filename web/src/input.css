@@ -335,3 +335,169 @@
         @apply min-h-0 w-full p-0 shadow-none;
     }
 }
+
+/* ===== Světlý / tmavý režim ===== */
+.dark {
+    color-scheme: dark;
+}
+
+body,
+body * {
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.35s ease, fill 0.35s ease;
+}
+
+.theme-toggle {
+    position: relative;
+    width: 64px;
+    height: 32px;
+    flex-shrink: 0;
+    padding: 0;
+    border-radius: 9999px;
+    border: 1px solid #d4d4d4;
+    background-color: #e7eef3;
+    cursor: pointer;
+    transition: background-color 0.45s ease, border-color 0.45s ease;
+}
+
+.theme-toggle:focus-visible {
+    outline: 2px solid #00b5c8;
+    outline-offset: 2px;
+}
+
+.theme-toggle-thumb {
+    position: absolute;
+    top: 50%;
+    left: 3px;
+    width: 26px;
+    height: 26px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background-color: #ffffff;
+    color: #f59e0b;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s ease, color 0.4s ease;
+}
+
+.theme-toggle-thumb svg {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    transition: opacity 0.35s ease, transform 0.4s ease;
+}
+
+.theme-icon-sun {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+.theme-icon-moon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.4);
+}
+
+.dark .theme-toggle {
+    background-color: #334155;
+    border-color: #475569;
+}
+
+.dark .theme-toggle-thumb {
+    left: calc(100% - 29px);
+    background-color: #0f172a;
+    color: #facc15;
+}
+
+.dark .theme-icon-sun {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.4);
+}
+
+.dark .theme-icon-moon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+.dark body {
+    background-color: #0f172a;
+    color: #e2e8f0;
+}
+
+.dark .bg-white {
+    background-color: #1e293b;
+}
+
+.dark .bg-neutral-100 {
+    background-color: #0f172a;
+}
+
+.dark .bg-neutral-50,
+.dark .bg-neutral-50\/80 {
+    background-color: #172033;
+}
+
+.dark #filters-bar {
+    background-image: none;
+    background-color: #172033;
+}
+
+.dark .text-neutral-900 { color: #f1f5f9; }
+.dark .text-neutral-800 { color: #e2e8f0; }
+.dark .text-neutral-700 { color: #cbd5e1; }
+.dark .text-neutral-600 { color: #aebccd; }
+.dark .text-neutral-500 { color: #94a3b8; }
+.dark .text-neutral-400 { color: #7e8ca1; }
+
+.dark .border-neutral-100 { border-color: #283549; }
+.dark .border-neutral-200 { border-color: #334155; }
+.dark .border-neutral-300 { border-color: #3b4a61; }
+.dark .ring-neutral-200 { --tw-ring-color: #334155; }
+
+.dark .hover\:bg-neutral-50:hover { background-color: #243244; }
+.dark .hover\:bg-neutral-100:hover { background-color: #2b3a4f; }
+
+.dark .bg-brand-light { background-color: rgba(0, 181, 200, 0.12); }
+.dark .text-brand-dark { color: #5fd3e0; }
+
+.dark .bg-green-50 { background-color: rgba(34, 197, 94, 0.13); }
+.dark .border-green-100 { border-color: rgba(34, 197, 94, 0.28); }
+.dark .hover\:bg-green-100:hover { background-color: rgba(34, 197, 94, 0.22); }
+
+.dark .btn-secondary {
+    background-color: #1e293b;
+    border-color: #3b4a61;
+    color: #cbd5e1;
+}
+.dark .btn-secondary:hover { background-color: #243244; }
+
+.dark .btn-icon {
+    background-color: #1e293b;
+    border-color: #3b4a61;
+    color: #aebccd;
+}
+.dark .btn-icon:hover { background-color: #243244; color: #f1f5f9; }
+
+.dark .filter-input,
+.dark .filter-select {
+    background-color: #1e293b;
+    border-color: #3b4a61;
+    color: #e2e8f0;
+}
+.dark .filter-input::placeholder { color: #7e8ca1; }
+.dark .filter-select:disabled { background-color: #172033; color: #64748b; }
+
+.dark .filter-suggestions {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+.dark .filter-suggestion:hover,
+.dark .filter-suggestion.is-active { background-color: rgba(0, 181, 200, 0.15); }
+.dark .filter-suggestion-name { color: #f1f5f9; }
+.dark .filter-suggestion-meta { color: #94a3b8; }
+
+.dark .modal-close { color: #94a3b8; }
+.dark .modal-close:hover { background-color: #2b3a4f; color: #f1f5f9; }
+
+.dark .sort-btn { color: #94a3b8; }
+.dark .sort-indicator::after { color: #64748b; }

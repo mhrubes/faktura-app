@@ -908,7 +908,38 @@ function initFilters() {
   exportFilters.bind();
 }
 
+function initThemeToggle() {
+  const toggle = document.getElementById("theme-toggle");
+  if (!toggle) return;
+
+  const readStored = () => {
+    try {
+      return localStorage.getItem("faktura-theme");
+    } catch {
+      return null;
+    }
+  };
+
+  const apply = (isDark) => {
+    document.documentElement.classList.toggle("dark", isDark);
+    toggle.setAttribute("aria-checked", isDark ? "true" : "false");
+  };
+
+  apply(readStored() === "dark");
+
+  toggle.addEventListener("click", () => {
+    const isDark = !document.documentElement.classList.contains("dark");
+    apply(isDark);
+    try {
+      localStorage.setItem("faktura-theme", isDark ? "dark" : "light");
+    } catch {
+      // úložiště nemusí být dostupné
+    }
+  });
+}
+
 async function init() {
+  initThemeToggle();
   initFilters();
   initSort();
   initModals();
