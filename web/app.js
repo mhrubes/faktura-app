@@ -421,26 +421,109 @@ async function saveInvoice() {
     });
 }
 
-async function saveTemplate() {
-  const btn = document.getElementById("btn-save-template");
+function templateExists(template) {
+  return Boolean(
+    template &&
+      (template.supplier?.name ||
+        template.customer?.name ||
+        template.payment?.accountNumber ||
+        template.sourceInvoiceNumber)
+  );
+}
 
+function buildTemplateInfoItems(template) {
+  const items = [];
+  if (template.sourceInvoiceNumber) items.push(`Z faktury č.: ${template.sourceInvoiceNumber}`);
+  if (template.supplier?.name) items.push(`Dodavatel: ${template.supplier.name}`);
+  if (template.supplier?.ico) items.push(`IČ: ${template.supplier.ico}`);
+  if (template.customer?.name) items.push(`Odběratel: ${template.customer.name}`);
+  items.push(`Počet položek: ${template.items?.length || 0}`);
+  if (template.savedAt) {
+    const saved = new Date(template.savedAt);
+    if (!Number.isNaN(saved.getTime())) {
+      items.push(`Uloženo: ${saved.toLocaleString("cs-CZ")}`);
+    }
+  }
+  return items;
+}
+
+function openTemplateSaveModal(existing) {
+  const exists = templateExists(existing);
+  const title = document.getElementById("template-save-modal-title");
+  const text = document.getElementById("template-save-modal-text");
+  const confirmBtn = document.getElementById("template-save-modal-confirm");
+  const existingBox = document.getElementById("template-save-existing");
+  const existingInfo = document.getElementById("template-save-existing-info");
+
+  if (exists) {
+    title.textContent = "Přepsat uloženou šablonu?";
+    text.textContent =
+      "Šablona už existuje. Chceš ji přepsat údaji z této faktury (dodavatel, odběratel, platba, položky)?";
+    confirmBtn.textContent = "Přepsat";
+    existingInfo.innerHTML = buildTemplateInfoItems(existing)
+      .map((line) => `<li>${line.replace(/</g, "&lt;")}</li>`)
+      .join("");
+    existingBox.classList.remove("hidden");
+  } else {
+    title.textContent = "Uložit jako šablonu?";
+    text.textContent =
+      "Chceš uložit údaje z této faktury jako šablonu (dodavatel, odběratel, platba, položky)?";
+    confirmBtn.textContent = "Uložit";
+    existingInfo.innerHTML = "";
+    existingBox.classList.add("hidden");
+  }
+
+  document.getElementById("template-save-modal").classList.remove("hidden");
+  document.body.classList.add("overflow-hidden");
+  confirmBtn.focus();
+}
+
+function closeTemplateSaveModal() {
+  document.getElementById("template-save-modal").classList.add("hidden");
+  document.body.classList.remove("overflow-hidden");
+}
+
+async function saveTemplate() {
   if (!(await validateInvoiceNumberOrToast())) return;
 
+  try {
+    const existing = await FakturaStorage.getTemplate();
+    openTemplateSaveModal(existing);
+  } catch (err) {
+    alert(err.message || "Nepodařilo se načíst stávající šablonu.");
+  }
+}
+
+async function confirmSaveTemplate() {
+  const btn = document.getElementById("template-save-modal-confirm");
   btn.disabled = true;
 
   const data = InvoiceModel.collectFromForm();
   const template = InvoiceModel.extractTemplateFromInvoice(data);
 
-  FakturaStorage.saveTemplate(template)
-    .then(() => {
-      showToast("Šablona uložena do data/sablona.json");
-    })
-    .catch((err) => {
-      alert(err.message || "Uložení šablony se nezdařilo.");
-    })
-    .finally(() => {
-      btn.disabled = false;
-    });
+  try {
+    await FakturaStorage.saveTemplate(template);
+    closeTemplateSaveModal();
+    showToast("Šablona uložena do data/sablona.json");
+  } catch (err) {
+    alert(err.message || "Uložení šablony se nezdařilo.");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function initTemplateSaveModal() {
+  document.getElementById("template-save-modal-cancel").addEventListener("click", closeTemplateSaveModal);
+  document.getElementById("template-save-modal-confirm").addEventListener("click", confirmSaveTemplate);
+  document.getElementById("template-save-modal-close").addEventListener("click", closeTemplateSaveModal);
+  document.getElementById("template-save-modal-backdrop").addEventListener("click", closeTemplateSaveModal);
+
+  document.addEventListener("keydown", (e) => {
+    const modal = document.getElementById("template-save-modal");
+    if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+      closeTemplateSaveModal();
+    }
+  });
 }
 
 async function loadInvoiceFromParams() {
@@ -486,6 +569,7 @@ async function init() {
   document.getElementById("btn-save").addEventListener("click", saveInvoice);
   document.getElementById("btn-save-template").addEventListener("click", saveTemplate);
   initRemoveModal();
+  initTemplateSaveModal();
 
   const vs = document.getElementById("variable-symbol");
   const invoiceNumber = document.getElementById("invoice-number");
