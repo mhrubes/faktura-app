@@ -508,6 +508,16 @@ body * {
 }
 .dark .btn-icon:hover { background-color: #243244; color: #f1f5f9; }
 
+.dark .btn-icon-danger { color: #f87171; }
+.dark .btn-icon-danger:hover { background-color: rgba(248, 113, 113, 0.14); color: #fca5a5; }
+
+.dark .btn-icon-resolved {
+    border-color: rgba(34, 197, 94, 0.5);
+    background-color: rgba(34, 197, 94, 0.18);
+    color: #4ade80;
+}
+.dark .btn-icon-resolved:hover { background-color: rgba(34, 197, 94, 0.28); color: #86efac; }
+
 .dark .filter-input,
 .dark .filter-select {
     background-color: #1e293b;
