@@ -452,7 +452,37 @@ body * {
 .dark .border-neutral-100 { border-color: #283549; }
 .dark .border-neutral-200 { border-color: #334155; }
 .dark .border-neutral-300 { border-color: #3b4a61; }
+.dark .border-neutral-400 { border-color: #475569; }
 .dark .ring-neutral-200 { --tw-ring-color: #334155; }
+
+/* Papír faktury zůstává světlý (dokument / tisk) i v tmavém režimu */
+.dark #invoice {
+    background-color: #ffffff;
+    color: #171717;
+    color-scheme: light;
+}
+
+.dark #invoice .bg-white {
+    background-color: #ffffff;
+}
+
+/* Vstupy v papíru: vynutit čitelné barvy i v tmavém režimu */
+.dark #invoice .party-name,
+.dark #invoice .party-line,
+.dark #invoice .inline-short,
+.dark #invoice .contact-row input,
+.dark #invoice .date-item input,
+.dark #invoice .invoice-number-box,
+.dark #invoice input[type="text"],
+.dark #invoice input[type="email"],
+.dark #invoice input[type="date"] {
+    color: #171717;
+}
+
+.dark #invoice .payment-line input,
+.dark #invoice .payment-select {
+    color: #ffffff;
+}
 
 .dark .hover\:bg-neutral-50:hover { background-color: #243244; }
 .dark .hover\:bg-neutral-100:hover { background-color: #2b3a4f; }

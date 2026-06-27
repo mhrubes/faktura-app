@@ -4,6 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Faktura – editor</title>
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem("faktura-theme") === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="css/tailwind.css" />
 </head>
 <body class="m-0 bg-[#e0e0e0] p-6 font-sans text-invoice leading-snug text-neutral-900">
