@@ -162,6 +162,7 @@ const InvoiceModel = (() => {
 
   function extractTemplateFromInvoice(invoice) {
     return {
+      sourceInvoiceNumber: invoice.invoiceNumber || "",
       supplier: { ...invoice.supplier },
       customer: { ...invoice.customer },
       payment: {

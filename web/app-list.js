@@ -516,6 +516,36 @@ async function confirmDelete() {
   closeDeleteModal();
 }
 
+function templateHasContent(template) {
+  return Boolean(
+    template &&
+      (template.supplier?.name ||
+        template.customer?.name ||
+        template.payment?.accountNumber)
+  );
+}
+
+function updateTemplateBannerInfo(template, hasTemplate) {
+  const info = document.getElementById("template-banner-info");
+  if (!info) return;
+
+  if (!hasTemplate) {
+    info.classList.add("hidden");
+    info.textContent = "";
+    return;
+  }
+
+  const sourceNumber = template?.sourceInvoiceNumber || "";
+
+  if (sourceNumber) {
+    info.textContent = ` (šablona z faktury č. ${sourceNumber})`;
+    info.classList.remove("hidden");
+  } else {
+    info.classList.add("hidden");
+    info.textContent = "";
+  }
+}
+
 async function renderInvoiceList() {
   const emptyState = document.getElementById("empty-state");
   const filtersBar = document.getElementById("filters-bar");
@@ -527,10 +557,12 @@ async function renderInvoiceList() {
   try {
     allInvoices = await FakturaStorage.readInvoices();
     customerOptions = InvoiceFilters.buildCustomerOptions(allInvoices);
-    const hasTemplate = await FakturaStorage.hasTemplate();
+    const template = await FakturaStorage.getTemplate();
+    const hasTemplate = templateHasContent(template);
 
     serverError?.classList.add("hidden");
     templateBanner.classList.toggle("hidden", !hasTemplate);
+    updateTemplateBannerInfo(template, hasTemplate);
     updateExportButtonState();
 
     if (!allInvoices.length) {
