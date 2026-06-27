@@ -219,8 +219,40 @@ function resetSectionLabels() {
   });
 }
 
+let pdfPrevDark = false;
+let pdfPrevColorScheme = "";
+let pdfColorOverrides = [];
+
+function forcePdfBarColors() {
+  pdfColorOverrides = [];
+  document.querySelectorAll("#invoice .payment-bar, #invoice .recap-bar").forEach((bar) => {
+    pdfColorOverrides.push([bar, bar.getAttribute("style")]);
+    bar.style.backgroundColor = "#00b5c8";
+    bar.style.color = "#ffffff";
+    bar.querySelectorAll("*").forEach((child) => {
+      pdfColorOverrides.push([child, child.getAttribute("style")]);
+      child.style.color = "#ffffff";
+    });
+  });
+}
+
+function restorePdfBarColors() {
+  pdfColorOverrides.forEach(([el, style]) => {
+    if (style === null) {
+      el.removeAttribute("style");
+    } else {
+      el.setAttribute("style", style);
+    }
+  });
+  pdfColorOverrides = [];
+}
+
 function prepareForPdf() {
   document.body.classList.add("pdf-exporting");
+  pdfPrevDark = document.documentElement.classList.contains("dark");
+  if (pdfPrevDark) document.documentElement.classList.remove("dark");
+  pdfPrevColorScheme = document.documentElement.style.colorScheme;
+  document.documentElement.style.colorScheme = "light";
   fixSectionLabelsForPdf();
 
   document.querySelectorAll(".item-row").forEach((row) => {
@@ -260,6 +292,8 @@ function prepareForPdf() {
       replaceInputWithSpan(el);
     }
   });
+
+  forcePdfBarColors();
 }
 
 function formatPrintDate() {
@@ -302,6 +336,9 @@ function addPdfFooters(pdf) {
 
 function restoreAfterPdf() {
   document.body.classList.remove("pdf-exporting");
+  if (pdfPrevDark) document.documentElement.classList.add("dark");
+  document.documentElement.style.colorScheme = pdfPrevColorScheme;
+  restorePdfBarColors();
   resetSectionLabels();
 
   document.querySelectorAll(".pdf-date-replacement, .pdf-text-replacement").forEach((span) => {

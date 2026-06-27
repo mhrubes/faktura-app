@@ -541,3 +541,16 @@ body * {
 
 .dark .sort-btn { color: #94a3b8; }
 .dark .sort-indicator::after { color: #64748b; }
+
+/* PDF export: tyrkysové pruhy vždy sytě s bílým textem (html2canvas) */
+.pdf-exporting .payment-bar,
+.pdf-exporting .recap-bar {
+    background-color: #00b5c8 !important;
+}
+
+.pdf-exporting .payment-bar,
+.pdf-exporting .payment-bar *,
+.pdf-exporting .recap-bar,
+.pdf-exporting .recap-bar * {
+    color: #ffffff !important;
+}
