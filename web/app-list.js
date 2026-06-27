@@ -684,6 +684,8 @@ async function renderInvoiceList() {
       filtersBar.classList.add("hidden");
       filterEmpty.classList.add("hidden");
       listWrap.classList.add("hidden");
+      visibleIds = [];
+      updateBulkUi();
       return;
     }
 
@@ -699,6 +701,8 @@ async function renderInvoiceList() {
     filtersBar?.classList.add("hidden");
     filterEmpty.classList.add("hidden");
     listWrap.classList.add("hidden");
+    visibleIds = [];
+    updateBulkUi();
     updateExportButtonState();
   }
 }
