@@ -553,18 +553,6 @@ function closeDeleteModal() {
   document.body.classList.remove("overflow-hidden");
 }
 
-async function deleteTemplateIfNoInvoices() {
-  try {
-    const invoices = await FakturaStorage.readInvoices();
-    if (invoices.length === 0 && (await FakturaStorage.hasTemplate())) {
-      await FakturaStorage.deleteTemplate();
-      showToast("Seznam je prázdný — uložená šablona smazána.");
-    }
-  } catch {
-    // tiché selhání – není kritické pro mazání faktur
-  }
-}
-
 async function confirmDelete() {
   if (!invoicePendingDelete?.id) {
     closeDeleteModal();
@@ -574,7 +562,6 @@ async function confirmDelete() {
   try {
     await FakturaStorage.deleteInvoice(invoicePendingDelete.id);
     showToast("Faktura smazána ze složky data/invoices.");
-    await deleteTemplateIfNoInvoices();
     await renderInvoiceList();
   } catch (err) {
     alert(err.message || "Smazání se nezdařilo.");
@@ -638,7 +625,6 @@ async function confirmBulkDelete() {
     alert(`Některé faktury se nepodařilo smazat (${failed.length}).`);
   }
 
-  await deleteTemplateIfNoInvoices();
   await renderInvoiceList();
 }
 
@@ -750,7 +736,7 @@ async function renderInvoiceList() {
 
 function initModals() {
   document.getElementById("btn-new-invoice").addEventListener("click", handleNewInvoice);
-  document.getElementById("btn-new-empty").addEventListener("click", () => navigateToNewInvoice("empty"));
+  document.getElementById("btn-new-empty").addEventListener("click", handleNewInvoice);
   document.getElementById("btn-export").addEventListener("click", openExportModal);
 
   document.getElementById("template-modal-use").addEventListener("click", () => {
