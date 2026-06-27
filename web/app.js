@@ -45,12 +45,14 @@ function formatDateCs(isoDate) {
   return `${d}.${m}.${y}`;
 }
 
-function showToast(message) {
+function showToast(message, type = "success") {
   const toast = document.getElementById("toast");
   toast.textContent = message;
+  toast.classList.remove("bg-neutral-800", "bg-red-600");
+  toast.classList.add(type === "error" ? "bg-red-600" : "bg-neutral-800");
   toast.classList.remove("hidden");
   clearTimeout(showToast._timer);
-  showToast._timer = setTimeout(() => toast.classList.add("hidden"), 2800);
+  showToast._timer = setTimeout(() => toast.classList.add("hidden"), type === "error" ? 4000 : 2800);
 }
 
 function calculateRowTotal(row) {
@@ -357,8 +359,43 @@ function downloadPdf() {
     });
 }
 
-function saveInvoice() {
+async function validateInvoiceNumberOrToast() {
+  const numberInput = document.getElementById("invoice-number");
+  const number = (numberInput?.value || "").trim();
+
+  if (!number) {
+    showToast("Vyplň číslo faktury (pole Faktura).", "error");
+    numberInput?.focus();
+    return false;
+  }
+
+  const currentId = document.getElementById("invoice-root")?.dataset.invoiceId || null;
+
+  try {
+    const invoices = await FakturaStorage.readInvoices();
+    const duplicate = invoices.some(
+      (inv) =>
+        inv.id !== currentId &&
+        String(inv.invoiceNumber || "").trim().toLowerCase() === number.toLowerCase()
+    );
+    if (duplicate) {
+      showToast(`Faktura s číslem ${number} už existuje.`, "error");
+      numberInput?.focus();
+      return false;
+    }
+  } catch (err) {
+    showToast(err.message || "Nepodařilo se ověřit číslo faktury.", "error");
+    return false;
+  }
+
+  return true;
+}
+
+async function saveInvoice() {
   const btn = document.getElementById("btn-save");
+
+  if (!(await validateInvoiceNumberOrToast())) return;
+
   btn.disabled = true;
   btn.textContent = "Ukládám…";
 
@@ -383,8 +420,11 @@ function saveInvoice() {
     });
 }
 
-function saveTemplate() {
+async function saveTemplate() {
   const btn = document.getElementById("btn-save-template");
+
+  if (!(await validateInvoiceNumberOrToast())) return;
+
   btn.disabled = true;
 
   const data = InvoiceModel.collectFromForm();
