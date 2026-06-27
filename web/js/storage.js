@@ -74,6 +74,10 @@ const FakturaStorage = (() => {
     });
   }
 
+  async function deleteTemplate() {
+    return apiFetch("/template", { method: "DELETE" });
+  }
+
   async function hasTemplate() {
     const template = await getTemplate();
     return Boolean(
@@ -186,6 +190,7 @@ const FakturaStorage = (() => {
     readInvoices,
     getTemplate,
     saveTemplate,
+    deleteTemplate,
     hasTemplate,
     downloadInvoiceJson,
     downloadInvoicesJson,

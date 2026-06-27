@@ -254,6 +254,20 @@ function createFakturaServer(options = {}) {
     return record;
   }
 
+  async function deleteTemplateRecord() {
+    try {
+      await fs.unlink(templateFile);
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+    }
+    const legacyTemplate = path.join(dataRoot, "data", "sablona.txt");
+    try {
+      await fs.unlink(legacyTemplate);
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+    }
+  }
+
   async function serveStatic(req, res) {
     const urlPath = decodeURIComponent(req.url.split("?")[0]);
     const filePath = path.join(staticRoot, urlPath === "/" ? "index.html" : urlPath.replace(/^\//, ""));
@@ -334,6 +348,13 @@ function createFakturaServer(options = {}) {
         const body = await parseBody(req);
         const saved = await saveTemplateRecord(body || {});
         sendJson(res, 200, saved);
+        return;
+      }
+
+      if (parts[1] === "template" && req.method === "DELETE") {
+        await deleteTemplateRecord();
+        res.writeHead(204);
+        res.end();
         return;
       }
 
