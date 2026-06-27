@@ -3,319 +3,335 @@
 @tailwind utilities;
 
 @layer base {
-  *,
-  *::before,
-  *::after {
-    @apply box-border;
-  }
+    *,
+    *::before,
+    *::after {
+        @apply box-border;
+    }
 }
 
 @layer components {
-  .section-label {
-    @apply relative flex min-w-[30px] items-center justify-center overflow-visible;
-  }
-
-  .section-label span {
-    @apply absolute left-1/2 top-1/2 w-max -translate-x-1/2 -translate-y-1/2 -rotate-90 whitespace-nowrap text-2xs font-bold tracking-widest text-brand;
-  }
-
-  .section-recap .section-label {
-    @apply min-h-[72px];
-  }
-
-  .ident-columns {
-    @apply mb-3 grid grid-cols-2 grid-rows-2 gap-y-7;
-  }
-
-  .supplier-top {
-    @apply col-start-1 row-start-1 border-r border-[#d8d8d8] pr-[22px];
-  }
-
-  .contact-sub {
-    @apply col-start-1 row-start-2 mt-0 border-r border-[#d8d8d8] pr-[22px];
-  }
-
-  .invoice-header-row {
-    @apply col-start-2 row-start-1 flex items-center justify-between gap-3.5 self-start pl-[22px];
-  }
-
-  .customer-details {
-    @apply col-start-2 row-start-2 mt-0 pl-[22px];
-  }
-
-  .party-name {
-    @apply mb-0.5 block w-full border-0 bg-transparent p-0 text-invoice font-bold text-neutral-900 outline-none;
-  }
-
-  .party-line {
-    @apply mb-px block w-full border-0 bg-transparent p-0 text-invoice text-neutral-900 outline-none;
-  }
-
-  .party-ids {
-    @apply mt-1 flex flex-wrap items-center gap-1 text-invoice;
-  }
-
-  .inline-short {
-    @apply w-[90px] border-0 bg-transparent p-0 text-invoice text-neutral-900 outline-none;
-  }
-
-  .contact-row {
-    @apply mb-0.5 grid grid-cols-[52px_1fr] gap-2;
-  }
-
-  .contact-row input {
-    @apply border-0 bg-transparent p-0 text-invoice text-neutral-900 outline-none;
-  }
-
-  .date-item input {
-    @apply border-0 bg-transparent p-0 text-invoice font-bold text-neutral-900 outline-none;
-  }
-
-  .invoice-number-box {
-    @apply min-w-[110px] border border-[#b0b0b0] bg-[#ececec] px-4 py-1.5 text-center text-invoice-num font-bold text-neutral-900 outline-none;
-  }
-
-  .payment-line input,
-  .payment-select {
-    @apply min-w-0 flex-1 rounded-sm border-0 bg-white/20 px-1 py-0.5 text-invoice-sm text-white outline-none;
-  }
-
-  .payment-line input::placeholder {
-    @apply text-white/60;
-  }
-
-  .payment-select {
-    @apply max-w-[100px] cursor-pointer;
-  }
-
-  .payment-select option {
-    @apply text-black;
-  }
-
-  .items-table input {
-    @apply w-full border-0 bg-transparent p-0.5 text-invoice-sm outline-none;
-  }
-
-  .items-table input:focus {
-    @apply bg-brand-light outline outline-1 outline-brand;
-  }
-
-  .supplier-top input:focus,
-  .customer-details input:focus,
-  .contact-row input:focus,
-  .date-item input:focus,
-  .invoice-number-box:focus {
-    @apply bg-brand-light outline outline-1 outline-brand;
-  }
-
-  .col-desc {
-    @apply w-auto;
-  }
-
-  .col-qty {
-    @apply w-[55px] text-right;
-  }
+    .section-label {
+        @apply relative flex min-w-[30px] items-center justify-center overflow-visible;
+    }
+
+    .section-label span {
+        @apply absolute left-1/2 top-1/2 w-max -translate-x-1/2 -translate-y-1/2 -rotate-90 whitespace-nowrap text-2xs font-bold tracking-widest text-brand;
+    }
+
+    .section-recap .section-label {
+        @apply min-h-[72px];
+    }
+
+    .ident-columns {
+        @apply mb-3 grid grid-cols-2 grid-rows-2 gap-y-7;
+    }
+
+    .supplier-top {
+        @apply col-start-1 row-start-1 border-r border-[#d8d8d8] pr-[22px];
+    }
+
+    .contact-sub {
+        @apply col-start-1 row-start-2 mt-0 border-r border-[#d8d8d8] pr-[22px];
+    }
+
+    .invoice-header-row {
+        @apply col-start-2 row-start-1 flex items-center justify-between gap-3.5 self-start pl-[22px];
+    }
+
+    .customer-details {
+        @apply col-start-2 row-start-2 mt-0 pl-[22px];
+    }
+
+    .party-name {
+        @apply mb-0.5 block w-full border-0 bg-transparent p-0 text-invoice font-bold text-neutral-900 outline-none;
+    }
+
+    .party-line {
+        @apply mb-px block w-full border-0 bg-transparent p-0 text-invoice text-neutral-900 outline-none;
+    }
+
+    .party-ids {
+        @apply mt-1 flex flex-wrap items-center gap-1 text-invoice;
+    }
+
+    .inline-short {
+        @apply w-[90px] border-0 bg-transparent p-0 text-invoice text-neutral-900 outline-none;
+    }
+
+    .contact-row {
+        @apply mb-0.5 grid grid-cols-[52px_1fr] gap-2;
+    }
+
+    .contact-row input {
+        @apply border-0 bg-transparent p-0 text-invoice text-neutral-900 outline-none;
+    }
+
+    .date-item input {
+        @apply border-0 bg-transparent p-0 text-invoice font-bold text-neutral-900 outline-none;
+    }
+
+    .invoice-number-box {
+        @apply min-w-[110px] border border-[#b0b0b0] bg-[#ececec] px-4 py-1.5 text-center text-invoice-num font-bold text-neutral-900 outline-none;
+    }
+
+    .payment-line input,
+    .payment-select {
+        @apply min-w-0 flex-1 rounded-sm border-0 bg-white/20 px-1 py-0.5 text-invoice-sm text-white outline-none;
+    }
+
+    .payment-line input::placeholder {
+        @apply text-white/60;
+    }
+
+    .payment-select {
+        @apply max-w-[100px] cursor-pointer;
+    }
+
+    .payment-select option {
+        @apply text-black;
+    }
+
+    .items-table input {
+        @apply w-full border-0 bg-transparent p-0.5 text-invoice-sm outline-none;
+    }
+
+    .items-table input:focus {
+        @apply bg-brand-light outline outline-1 outline-brand;
+    }
+
+    .supplier-top input:focus,
+    .customer-details input:focus,
+    .contact-row input:focus,
+    .date-item input:focus,
+    .invoice-number-box:focus {
+        @apply bg-brand-light outline outline-1 outline-brand;
+    }
+
+    .col-desc {
+        @apply w-auto;
+    }
+
+    .col-qty {
+        @apply w-[55px] text-right;
+    }
 
-  .col-unit {
-    @apply w-[45px] text-center;
-  }
-
-  .col-price {
-    @apply w-[75px] text-right;
-  }
-
-  .col-total {
-    @apply w-[75px] text-right;
-  }
-
-  .col-action {
-    @apply w-8 !border-0 !bg-transparent;
-  }
-
-  .item-row td {
-    @apply bg-[#f0f0f0];
-  }
-
-  .item-row td.col-action {
-    @apply bg-transparent;
-  }
-
-  .cell-action {
-    @apply !border-0 !bg-transparent p-0.5 text-center;
-  }
-
-  .pdf-exporting {
-    @apply !bg-white !p-0;
-  }
-
-  .pdf-exporting .invoice {
-    @apply m-0 h-auto min-h-0 w-[210mm] max-w-[210mm] overflow-hidden shadow-none;
-    padding: 8mm 8mm 6mm 6mm;
-  }
-
-  .pdf-exporting .inv-section {
-    @apply mb-2;
-  }
-
-  .pdf-exporting .inv-section:last-child {
-    @apply mb-0;
-  }
-
-  .pdf-exporting .section-recap .section-label {
-    @apply min-h-0;
-  }
-
-  .pdf-exporting .no-print {
-    @apply !hidden;
-  }
-
-  .pdf-date-replacement {
-    @apply font-bold;
-  }
-
-  .pdf-text-replacement {
-    @apply inline text-inherit;
-  }
-
-  .btn-primary {
-    @apply cursor-pointer rounded border border-brand bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-dark;
-  }
-
-  .btn-secondary {
-    @apply cursor-pointer rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50;
-  }
-
-  .btn-danger {
-    @apply cursor-pointer rounded border border-red-600 bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700;
-  }
-
-  .btn-table {
-    @apply cursor-pointer rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50;
-  }
-
-  .invoice-list-table tbody tr:last-child {
-    @apply border-b-0;
-  }
-
-  .sort-btn {
-    @apply inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-xs font-semibold uppercase tracking-wide text-neutral-500 transition hover:text-brand;
-  }
-
-  .sort-btn-right {
-    @apply ml-auto;
-  }
-
-  .sort-indicator::after {
-    content: "↕";
-    @apply text-[10px] font-normal text-neutral-300;
-  }
-
-  .sort-btn.is-sorted-asc .sort-indicator::after {
-    content: "↑";
-    @apply text-brand;
-  }
-
-  .sort-btn.is-sorted-desc .sort-indicator::after {
-    content: "↓";
-    @apply text-brand;
-  }
-
-  .filter-input-wrap {
-    @apply relative;
-  }
-
-  .filter-input-icon {
-    @apply pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400;
-  }
-
-  .filter-input {
-    @apply w-full rounded-lg border border-neutral-300 bg-white py-2.5 pl-10 pr-10 text-sm text-neutral-900 shadow-sm outline-none transition placeholder:text-neutral-400;
-  }
-
-  .filter-input:focus {
-    @apply border-brand ring-2 ring-brand/20;
-  }
-
-  .filter-clear {
-    @apply absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-lg leading-none text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700;
-  }
-
-  .filter-suggestions {
-    @apply absolute left-0 right-0 top-[calc(100%+6px)] z-20 max-h-64 overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg;
-  }
-
-  .filter-suggestion {
-    @apply cursor-pointer px-3.5 py-2.5 transition hover:bg-brand-light;
-  }
-
-  .filter-suggestion.is-active {
-    @apply bg-brand-light;
-  }
-
-  .filter-suggestion-name {
-    @apply text-sm font-medium text-neutral-900;
-  }
-
-  .filter-suggestion-meta {
-    @apply mt-0.5 text-xs text-neutral-500;
-  }
-
-  .filter-suggestion-meta span + span::before {
-    content: " · ";
-  }
-
-  .filter-select {
-    @apply cursor-pointer rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900 shadow-sm outline-none transition disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400;
-  }
-
-  .filter-select-year {
-    @apply min-w-[76px];
-  }
-
-  .filter-select-month {
-    @apply min-w-[96px];
-  }
-
-  .filter-select-day {
-    @apply min-w-[60px];
-  }
-
-  .filter-clear-dates {
-    @apply flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-base leading-none text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700;
-  }
-
-  .filter-select:focus:not(:disabled) {
-    @apply border-brand ring-2 ring-brand/20;
-  }
-
-  .btn-tooltip-wrap {
-    @apply relative inline-flex;
-  }
-
-  .btn-tooltip-wrap .btn-tooltip {
-    @apply pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-max max-w-[220px] -translate-x-1/2 rounded-md bg-neutral-800 px-2.5 py-1.5 text-center text-xs text-white shadow-lg;
-  }
-
-  .btn-tooltip-wrap:has(button:disabled):hover .btn-tooltip {
-    @apply block;
-  }
-
-  .btn-tooltip-wrap .btn-tooltip::after {
-    content: "";
-    @apply absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-neutral-800;
-  }
+    .col-unit {
+        @apply w-[45px] text-center;
+    }
+
+    .col-price {
+        @apply w-[75px] text-right;
+    }
+
+    .col-total {
+        @apply w-[75px] text-right;
+    }
+
+    .col-action {
+        @apply w-8 !border-0 !bg-transparent;
+    }
+
+    .item-row td {
+        @apply bg-[#f0f0f0];
+    }
+
+    .item-row td.col-action {
+        @apply bg-transparent;
+    }
+
+    .cell-action {
+        @apply !border-0 !bg-transparent p-0.5 text-center;
+    }
+
+    .pdf-exporting {
+        @apply !bg-white !p-0;
+    }
+
+    .pdf-exporting .invoice {
+        @apply m-0 h-auto min-h-0 w-[210mm] max-w-[210mm] overflow-hidden shadow-none;
+        padding: 8mm 8mm 6mm 6mm;
+    }
+
+    .pdf-exporting .inv-section {
+        @apply mb-2;
+    }
+
+    .pdf-exporting .inv-section:last-child {
+        @apply mb-0;
+    }
+
+    .pdf-exporting .section-recap .section-label {
+        @apply min-h-0;
+    }
+
+    .pdf-exporting .no-print {
+        @apply !hidden;
+    }
+
+    .pdf-date-replacement {
+        @apply font-bold;
+    }
+
+    .pdf-text-replacement {
+        @apply inline text-inherit;
+    }
+
+    .btn-primary {
+        @apply cursor-pointer rounded border border-brand bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-dark;
+    }
+
+    .btn-secondary {
+        @apply cursor-pointer rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50;
+    }
+
+    .btn-danger {
+        @apply cursor-pointer rounded border border-red-600 bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700;
+    }
+
+    .btn-table {
+        @apply cursor-pointer rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50;
+    }
+
+    .btn-icon {
+        @apply inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded border border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900;
+    }
+
+    .btn-icon-danger {
+        @apply text-red-600 hover:bg-red-50 hover:text-red-700;
+    }
+
+    .btn-icon-resolved {
+        @apply border-green-300 bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800;
+    }
+
+    .modal-close {
+        @apply absolute right-3 top-3 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded text-2xl leading-none text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700;
+    }
+
+    .invoice-list-table tbody tr:last-child {
+        @apply border-b-0;
+    }
+
+    .sort-btn {
+        @apply inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-xs font-semibold uppercase tracking-wide text-neutral-500 transition hover:text-brand;
+    }
+
+    .sort-btn-right {
+        @apply ml-auto;
+    }
+
+    .sort-indicator::after {
+        content: '↕';
+        @apply text-[10px] font-normal text-neutral-300;
+    }
+
+    .sort-btn.is-sorted-asc .sort-indicator::after {
+        content: '↑';
+        @apply text-brand;
+    }
+
+    .sort-btn.is-sorted-desc .sort-indicator::after {
+        content: '↓';
+        @apply text-brand;
+    }
+
+    .filter-input-wrap {
+        @apply relative;
+    }
+
+    .filter-input-icon {
+        @apply pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400;
+    }
+
+    .filter-input {
+        @apply w-full rounded-lg border border-neutral-300 bg-white py-2.5 pl-10 pr-10 text-sm text-neutral-900 shadow-sm outline-none transition placeholder:text-neutral-400;
+    }
+
+    .filter-input:focus {
+        @apply border-brand ring-2 ring-brand/20;
+    }
+
+    .filter-clear {
+        @apply absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-lg leading-none text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700;
+    }
+
+    .filter-suggestions {
+        @apply absolute left-0 right-0 top-[calc(100%+6px)] z-20 max-h-64 overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg;
+    }
+
+    .filter-suggestion {
+        @apply cursor-pointer px-3.5 py-2.5 transition hover:bg-brand-light;
+    }
+
+    .filter-suggestion.is-active {
+        @apply bg-brand-light;
+    }
+
+    .filter-suggestion-name {
+        @apply text-sm font-medium text-neutral-900;
+    }
+
+    .filter-suggestion-meta {
+        @apply mt-0.5 text-xs text-neutral-500;
+    }
+
+    .filter-suggestion-meta span + span::before {
+        content: ' · ';
+    }
+
+    .filter-select {
+        @apply cursor-pointer rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-xs text-neutral-900 shadow-sm outline-none transition disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400;
+    }
+
+    .filter-select-year {
+        @apply min-w-[76px];
+    }
+
+    .filter-select-month {
+        @apply min-w-[96px];
+    }
+
+    .filter-select-day {
+        @apply min-w-[60px];
+    }
+
+    .filter-clear-dates {
+        @apply flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-base leading-none text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700;
+    }
+
+    .filter-select:focus:not(:disabled) {
+        @apply border-brand ring-2 ring-brand/20;
+    }
+
+    .btn-tooltip-wrap {
+        @apply relative inline-flex;
+    }
+
+    .btn-tooltip-wrap .btn-tooltip {
+        @apply pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-max max-w-[220px] -translate-x-1/2 rounded-md bg-neutral-800 px-2.5 py-1.5 text-center text-xs text-white shadow-lg;
+    }
+
+    .btn-tooltip-wrap:has(button:disabled):hover .btn-tooltip {
+        @apply block;
+    }
+
+    .btn-tooltip-wrap .btn-tooltip::after {
+        content: '';
+        @apply absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-neutral-800;
+    }
 }
 
 @media print {
-  body {
-    @apply bg-white p-0;
-  }
+    body {
+        @apply bg-white p-0;
+    }
 
-  .no-print {
-    @apply !hidden;
-  }
+    .no-print {
+        @apply !hidden;
+    }
 
-  .invoice {
-    @apply min-h-0 w-full p-0 shadow-none;
-  }
+    .invoice {
+        @apply min-h-0 w-full p-0 shadow-none;
+    }
 }

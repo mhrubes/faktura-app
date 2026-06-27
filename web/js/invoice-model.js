@@ -44,6 +44,7 @@ const InvoiceModel = (() => {
         method: "Převodem",
       },
       variableSymbolManual: false,
+      resolved: false,
       items: [{ desc: "", qty: "1,00", unit: "ks", unitPrice: "0,00" }],
     };
   }
@@ -215,6 +216,7 @@ const InvoiceModel = (() => {
       issueDate: formatDateCs(invoice.dates?.issue),
       total: total.toLocaleString("cs-CZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
       savedAt: formatSavedAt(invoice.savedAt || invoice.updatedAt),
+      resolved: Boolean(invoice.resolved),
     };
   }
 

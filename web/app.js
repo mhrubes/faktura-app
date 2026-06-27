@@ -404,6 +404,7 @@ async function saveInvoice() {
   if (root?.dataset.invoiceId) {
     data.id = root.dataset.invoiceId;
   }
+  data.resolved = root?.dataset.resolved === "1";
 
   FakturaStorage.saveInvoice(data)
     .then((saved) => {
@@ -451,6 +452,8 @@ async function loadInvoiceFromParams() {
     if (id) {
       const invoice = await FakturaStorage.getInvoice(id);
       InvoiceModel.applyToForm(invoice, { rebuildRows: rebuildItemRows });
+      const root = document.getElementById("invoice-root");
+      if (root) root.dataset.resolved = invoice.resolved ? "1" : "";
       document.title = `Faktura ${invoice.invoiceNumber || invoice.id} – editor`;
       return;
     }

@@ -4,6 +4,8 @@ let customerOptions = [];
 let listFilters = null;
 let exportFilters = null;
 let sortState = { column: null, direction: "asc" };
+let selectedIds = new Set();
+let visibleIds = [];
 
 const SORT_COLUMNS = ["number", "customer", "issue", "total"];
 
@@ -399,11 +401,15 @@ function renderInvoiceRows() {
     tbody.innerHTML = "";
     listWrap.classList.add("hidden");
     filterEmpty.classList.remove("hidden");
+    visibleIds = [];
+    updateBulkUi();
     return;
   }
 
   filterEmpty.classList.add("hidden");
   listWrap.classList.remove("hidden");
+
+  visibleIds = invoices.map((invoice) => invoice.id);
 
   tbody.innerHTML = invoices
     .map((invoice) => {
@@ -411,30 +417,78 @@ function renderInvoiceRows() {
       const fileLabel = FakturaStorage.getInvoiceFileLabel(invoice);
       const customer = invoice.customer || {};
       const customerMeta = [customer.ico, customer.dic].filter(Boolean).join(" · ");
+      const checked = selectedIds.has(summary.id) ? "checked" : "";
+      const rowClass = summary.resolved
+        ? "border-b border-green-100 bg-green-50 hover:bg-green-100"
+        : "border-b border-neutral-100 hover:bg-neutral-50";
       return `
-        <tr class="border-b border-neutral-100 hover:bg-neutral-50" data-id="${summary.id}">
+        <tr class="${rowClass}" data-id="${summary.id}">
+          <td class="px-5 py-4">
+            <input type="checkbox" class="row-select h-4 w-4 cursor-pointer accent-brand align-middle" data-id="${summary.id}" aria-label="Vybrat fakturu ${escapeHtml(summary.invoiceNumber)}" ${checked} />
+          </td>
           <td class="px-5 py-4 font-medium text-neutral-900">${escapeHtml(summary.invoiceNumber)}</td>
           <td class="px-5 py-4 text-neutral-700">
             <div>${escapeHtml(summary.customerName)}</div>
             ${customerMeta ? `<div class="mt-0.5 text-xs text-neutral-400">${escapeHtml(customerMeta)}</div>` : ""}
           </td>
           <td class="px-5 py-4 text-neutral-700">${escapeHtml(summary.issueDate)}</td>
-          <td class="px-5 py-4 text-right font-medium tabular-nums text-neutral-900">${escapeHtml(summary.total)} Kč</td>
+          <td class="whitespace-nowrap px-5 py-4 text-right font-medium tabular-nums text-neutral-900">${escapeHtml(summary.total)} Kč</td>
           <td class="px-5 py-4 text-neutral-500">
             <div>${escapeHtml(summary.savedAt)}</div>
             <div class="mt-0.5 text-xs text-neutral-400">${escapeHtml(fileLabel)}</div>
           </td>
           <td class="px-5 py-4">
             <div class="flex justify-end gap-2">
-              <a href="invoice.html?id=${encodeURIComponent(summary.id)}" class="btn-table">Otevřít</a>
-              <button type="button" class="btn-table btn-download" data-id="${summary.id}">Exportovat .json</button>
-              <button type="button" class="btn-table btn-delete text-red-600 hover:bg-red-50 hover:text-red-700" data-id="${summary.id}">Smazat</button>
+              <a href="invoice.html?id=${encodeURIComponent(summary.id)}" class="btn-icon" title="Otevřít" aria-label="Otevřít fakturu">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.379-8.379-2.828-2.828z"/></svg>
+              </a>
+              <button type="button" class="btn-icon btn-download" data-id="${summary.id}" title="Exportovat .json" aria-label="Exportovat .json">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 3a1 1 0 011 1v6.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 10.586V4a1 1 0 011-1z"/><path d="M4 14a1 1 0 011 1v1h10v-1a1 1 0 112 0v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1a1 1 0 011-1z"/></svg>
+              </button>
+              <button type="button" class="btn-icon btn-resolve ${summary.resolved ? "btn-icon-resolved" : ""}" data-id="${summary.id}" data-resolved="${summary.resolved ? "1" : "0"}" title="${summary.resolved ? "Zrušit vyřízeno" : "Označit jako vyřízenou"}" aria-label="${summary.resolved ? "Zrušit vyřízeno" : "Označit jako vyřízenou"}">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.5 7.5a1 1 0 01-1.42 0l-3.5-3.5a1 1 0 011.42-1.42l2.79 2.79 6.79-6.79a1 1 0 011.42 0z" clip-rule="evenodd"/></svg>
+              </button>
+              <button type="button" class="btn-icon btn-icon-danger btn-delete" data-id="${summary.id}" title="Smazat" aria-label="Smazat fakturu">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              </button>
             </div>
           </td>
         </tr>
       `;
     })
     .join("");
+
+  updateBulkUi();
+}
+
+function updateBulkUi() {
+  const bar = document.getElementById("bulk-actions");
+  const count = document.getElementById("bulk-count");
+  const selectAll = document.getElementById("select-all");
+
+  const total = selectedIds.size;
+
+  if (bar) bar.classList.toggle("hidden", total === 0);
+  if (bar) bar.classList.toggle("flex", total > 0);
+
+  if (count) {
+    count.textContent =
+      total === 1 ? "1 faktura označena" : `${total} faktur označeno`;
+  }
+
+  if (selectAll) {
+    const visibleSelected = visibleIds.filter((id) => selectedIds.has(id)).length;
+    selectAll.checked = visibleIds.length > 0 && visibleSelected === visibleIds.length;
+    selectAll.indeterminate = visibleSelected > 0 && visibleSelected < visibleIds.length;
+  }
+}
+
+function clearSelection() {
+  selectedIds = new Set();
+  document.querySelectorAll(".row-select").forEach((cb) => {
+    cb.checked = false;
+  });
+  updateBulkUi();
 }
 
 function showToast(message) {
@@ -516,6 +570,64 @@ async function confirmDelete() {
   closeDeleteModal();
 }
 
+function openBulkDeleteModal() {
+  const count = selectedIds.size;
+  if (count === 0) return;
+
+  const text = document.getElementById("bulk-delete-modal-text");
+  text.textContent =
+    count === 1
+      ? "Opravdu chcete smazat 1 označenou fakturu? Tuto akci nelze vrátit."
+      : `Opravdu chcete smazat ${count} označených faktur? Tuto akci nelze vrátit.`;
+
+  document.getElementById("bulk-delete-modal").classList.remove("hidden");
+  document.body.classList.add("overflow-hidden");
+  document.getElementById("bulk-delete-modal-confirm").focus();
+}
+
+function closeBulkDeleteModal() {
+  document.getElementById("bulk-delete-modal").classList.add("hidden");
+  document.body.classList.remove("overflow-hidden");
+}
+
+async function confirmBulkDelete() {
+  const ids = Array.from(selectedIds);
+  if (!ids.length) {
+    closeBulkDeleteModal();
+    return;
+  }
+
+  const confirmBtn = document.getElementById("bulk-delete-modal-confirm");
+  confirmBtn.disabled = true;
+
+  const failed = [];
+  for (const id of ids) {
+    try {
+      await FakturaStorage.deleteInvoice(id);
+      selectedIds.delete(id);
+    } catch (err) {
+      failed.push(id);
+    }
+  }
+
+  confirmBtn.disabled = false;
+  closeBulkDeleteModal();
+
+  const deletedCount = ids.length - failed.length;
+  if (deletedCount > 0) {
+    showToast(
+      deletedCount === 1
+        ? "1 faktura smazána ze složky data/invoices."
+        : `${deletedCount} faktur smazáno ze složky data/invoices.`
+    );
+  }
+  if (failed.length) {
+    alert(`Některé faktury se nepodařilo smazat (${failed.length}).`);
+  }
+
+  await renderInvoiceList();
+}
+
 function templateHasContent(template) {
   return Boolean(
     template &&
@@ -556,6 +668,8 @@ async function renderInvoiceList() {
 
   try {
     allInvoices = await FakturaStorage.readInvoices();
+    const existingIds = new Set(allInvoices.map((inv) => inv.id));
+    selectedIds = new Set(Array.from(selectedIds).filter((id) => existingIds.has(id)));
     customerOptions = InvoiceFilters.buildCustomerOptions(allInvoices);
     const template = await FakturaStorage.getTemplate();
     const hasTemplate = templateHasContent(template);
@@ -603,6 +717,7 @@ function initModals() {
     navigateToNewInvoice("empty");
   });
   document.getElementById("template-modal-backdrop").addEventListener("click", closeTemplateModal);
+  document.getElementById("template-modal-close").addEventListener("click", closeTemplateModal);
 
   document.getElementById("delete-modal-cancel").addEventListener("click", closeDeleteModal);
   document.getElementById("delete-modal-confirm").addEventListener("click", confirmDelete);
@@ -611,14 +726,36 @@ function initModals() {
   document.getElementById("export-modal-cancel").addEventListener("click", closeExportModal);
   document.getElementById("export-modal-confirm").addEventListener("click", confirmExport);
   document.getElementById("export-modal-backdrop").addEventListener("click", closeExportModal);
+  document.getElementById("export-modal-close").addEventListener("click", closeExportModal);
 
   document.getElementById("btn-clear-filter").addEventListener("click", () => listFilters.clearAll());
+
+  document.getElementById("select-all").addEventListener("change", (e) => {
+    if (e.target.checked) {
+      visibleIds.forEach((id) => selectedIds.add(id));
+    } else {
+      visibleIds.forEach((id) => selectedIds.delete(id));
+    }
+    document.querySelectorAll(".row-select").forEach((cb) => {
+      cb.checked = selectedIds.has(cb.dataset.id);
+    });
+    updateBulkUi();
+  });
+
+  document.getElementById("btn-bulk-resolve").addEventListener("click", () => bulkSetResolved(true));
+  document.getElementById("btn-bulk-unresolve").addEventListener("click", () => bulkSetResolved(false));
+  document.getElementById("btn-bulk-clear").addEventListener("click", clearSelection);
+  document.getElementById("btn-bulk-delete").addEventListener("click", openBulkDeleteModal);
+  document.getElementById("bulk-delete-modal-cancel").addEventListener("click", closeBulkDeleteModal);
+  document.getElementById("bulk-delete-modal-confirm").addEventListener("click", confirmBulkDelete);
+  document.getElementById("bulk-delete-modal-backdrop").addEventListener("click", closeBulkDeleteModal);
 
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     if (!document.getElementById("export-modal").classList.contains("hidden")) closeExportModal();
     if (!document.getElementById("template-modal").classList.contains("hidden")) closeTemplateModal();
     if (!document.getElementById("delete-modal").classList.contains("hidden")) closeDeleteModal();
+    if (!document.getElementById("bulk-delete-modal").classList.contains("hidden")) closeBulkDeleteModal();
   });
 
   document.addEventListener("click", (e) => {
@@ -632,6 +769,18 @@ function initModals() {
 }
 
 function initListActions() {
+  document.getElementById("invoice-list").addEventListener("change", (e) => {
+    const checkbox = e.target.closest(".row-select");
+    if (!checkbox) return;
+    const id = checkbox.dataset.id;
+    if (checkbox.checked) {
+      selectedIds.add(id);
+    } else {
+      selectedIds.delete(id);
+    }
+    updateBulkUi();
+  });
+
   document.getElementById("invoice-list").addEventListener("click", async (e) => {
     const downloadBtn = e.target.closest(".btn-download");
     if (downloadBtn) {
@@ -641,6 +790,19 @@ function initListActions() {
         showToast("Kopie faktury exportována.");
       } catch (err) {
         alert(err.message || "Export se nezdařil.");
+      }
+      return;
+    }
+
+    const resolveBtn = e.target.closest(".btn-resolve");
+    if (resolveBtn) {
+      const nextResolved = resolveBtn.dataset.resolved !== "1";
+      try {
+        await setInvoiceResolved(resolveBtn.dataset.id, nextResolved);
+        showToast(nextResolved ? "Faktura označena jako vyřízená." : "Vyřízeno zrušeno.");
+        await renderInvoiceList();
+      } catch (err) {
+        alert(err.message || "Změna stavu se nezdařila.");
       }
       return;
     }
@@ -655,6 +817,40 @@ function initListActions() {
       }
     }
   });
+}
+
+async function setInvoiceResolved(id, resolved) {
+  const invoice = await FakturaStorage.getInvoice(id);
+  invoice.resolved = resolved;
+  await FakturaStorage.saveInvoice(invoice);
+}
+
+async function bulkSetResolved(resolved) {
+  const ids = Array.from(selectedIds);
+  if (!ids.length) return;
+
+  const failed = [];
+  for (const id of ids) {
+    try {
+      await setInvoiceResolved(id, resolved);
+    } catch (err) {
+      failed.push(id);
+    }
+  }
+
+  const okCount = ids.length - failed.length;
+  if (okCount > 0) {
+    showToast(
+      resolved
+        ? `${okCount === 1 ? "1 faktura označena" : okCount + " faktur označeno"} jako vyřízené.`
+        : `Vyřízeno zrušeno u ${okCount === 1 ? "1 faktury" : okCount + " faktur"}.`
+    );
+  }
+  if (failed.length) {
+    alert(`U některých faktur se stav nezměnil (${failed.length}).`);
+  }
+
+  await renderInvoiceList();
 }
 
 function initImport() {
