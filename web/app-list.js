@@ -642,6 +642,33 @@ async function confirmBulkDelete() {
   await renderInvoiceList();
 }
 
+function openTemplateDeleteModal() {
+  document.getElementById("template-delete-modal").classList.remove("hidden");
+  document.body.classList.add("overflow-hidden");
+  document.getElementById("template-delete-modal-confirm").focus();
+}
+
+function closeTemplateDeleteModal() {
+  document.getElementById("template-delete-modal").classList.add("hidden");
+  document.body.classList.remove("overflow-hidden");
+}
+
+async function confirmTemplateDelete() {
+  const confirmBtn = document.getElementById("template-delete-modal-confirm");
+  confirmBtn.disabled = true;
+
+  try {
+    await FakturaStorage.deleteTemplate();
+    closeTemplateDeleteModal();
+    showToast("Uložená šablona smazána.");
+    await renderInvoiceList();
+  } catch (err) {
+    alert(err.message || "Smazání šablony se nezdařilo.");
+  } finally {
+    confirmBtn.disabled = false;
+  }
+}
+
 function templateHasContent(template) {
   return Boolean(
     template &&
@@ -741,6 +768,12 @@ function initModals() {
   document.getElementById("delete-modal-confirm").addEventListener("click", confirmDelete);
   document.getElementById("delete-modal-backdrop").addEventListener("click", closeDeleteModal);
 
+  document.getElementById("btn-delete-template").addEventListener("click", openTemplateDeleteModal);
+  document.getElementById("template-delete-modal-cancel").addEventListener("click", closeTemplateDeleteModal);
+  document.getElementById("template-delete-modal-confirm").addEventListener("click", confirmTemplateDelete);
+  document.getElementById("template-delete-modal-close").addEventListener("click", closeTemplateDeleteModal);
+  document.getElementById("template-delete-modal-backdrop").addEventListener("click", closeTemplateDeleteModal);
+
   document.getElementById("export-modal-cancel").addEventListener("click", closeExportModal);
   document.getElementById("export-modal-confirm").addEventListener("click", confirmExport);
   document.getElementById("export-modal-backdrop").addEventListener("click", closeExportModal);
@@ -774,6 +807,7 @@ function initModals() {
     if (!document.getElementById("template-modal").classList.contains("hidden")) closeTemplateModal();
     if (!document.getElementById("delete-modal").classList.contains("hidden")) closeDeleteModal();
     if (!document.getElementById("bulk-delete-modal").classList.contains("hidden")) closeBulkDeleteModal();
+    if (!document.getElementById("template-delete-modal").classList.contains("hidden")) closeTemplateDeleteModal();
   });
 
   document.addEventListener("click", (e) => {
