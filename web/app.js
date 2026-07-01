@@ -72,6 +72,7 @@ function calculateGrandTotal() {
   const formatted = formatCurrency(sum);
   document.getElementById("grand-total").textContent = formatted;
   document.getElementById("payment-total").textContent = formatted;
+  PaymentQr.updatePaymentQr();
   return sum;
 }
 
@@ -222,6 +223,7 @@ function resetSectionLabels() {
 let pdfPrevDark = false;
 let pdfPrevColorScheme = "";
 let pdfColorOverrides = [];
+let pdfQrWasVisible = null;
 
 function forcePdfBarColors() {
   pdfColorOverrides = [];
@@ -294,6 +296,16 @@ function prepareForPdf() {
   });
 
   forcePdfBarColors();
+
+  const includeQrInPdf =
+    PaymentQr.shouldShowQr() && document.getElementById("pdf-include-qr")?.checked !== false;
+  const qrWrap = document.getElementById("payment-qr-wrap");
+  if (qrWrap && !includeQrInPdf) {
+    pdfQrWasVisible = !qrWrap.classList.contains("hidden");
+    qrWrap.classList.add("hidden");
+  } else {
+    pdfQrWasVisible = null;
+  }
 }
 
 function formatPrintDate() {
@@ -346,6 +358,12 @@ function restoreAfterPdf() {
     if (input) input.style.display = "";
     span.remove();
   });
+
+  if (pdfQrWasVisible !== null) {
+    const qrWrap = document.getElementById("payment-qr-wrap");
+    if (qrWrap) qrWrap.classList.toggle("hidden", !pdfQrWasVisible);
+    pdfQrWasVisible = null;
+  }
 }
 
 function downloadPdf() {
@@ -607,6 +625,7 @@ async function init() {
   document.getElementById("btn-save-template").addEventListener("click", saveTemplate);
   initRemoveModal();
   initTemplateSaveModal();
+  PaymentQr.bindPaymentQrUpdates();
 
   const vs = document.getElementById("variable-symbol");
   const invoiceNumber = document.getElementById("invoice-number");
