@@ -199,20 +199,35 @@
   }
 
   .payment-qr-frame {
-    @apply relative mb-2 inline-block bg-white;
-    border: 1.5px solid #171717;
-    padding: 6px 6px 10px;
+    @apply mb-2 inline-flex flex-col items-stretch bg-white;
   }
 
-  .payment-qr-content canvas {
+  .payment-qr-body {
+    border: 1.5px solid #000;
+    border-bottom: none;
+    padding: 6px;
+  }
+
+  .payment-qr-body canvas {
     @apply block;
   }
 
+  .payment-qr-caption {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    padding: 0 1px 3px;
+  }
+
+  .payment-qr-line {
+    flex: 1 1 0%;
+    height: 0;
+    border-bottom: 1.5px solid #000;
+  }
+
   .payment-qr-label {
-    @apply absolute left-1/2 m-0 whitespace-nowrap bg-white px-1.5 text-[10px] font-bold leading-none tracking-wide;
-    bottom: 0;
+    @apply m-0 shrink-0 whitespace-nowrap bg-white px-1.5 text-[10px] font-bold leading-none tracking-wide;
     color: #000;
-    transform: translate(-50%, 50%);
   }
 
     .btn-primary {
@@ -539,9 +554,14 @@ body * {
     background-color: #fff;
 }
 
-.dark #invoice .payment-qr-frame {
-    border-color: #000;
+.dark #invoice .payment-qr-frame,
+.dark #invoice .payment-qr-body {
     background-color: #fff;
+}
+
+.dark #invoice .payment-qr-body,
+.dark #invoice .payment-qr-line {
+    border-color: #000;
 }
 
 .dark .hover\:bg-neutral-50:hover { background-color: #243244; }
