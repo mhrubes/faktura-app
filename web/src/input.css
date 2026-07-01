@@ -173,9 +173,17 @@
         @apply font-bold;
     }
 
-    .pdf-text-replacement {
-        @apply inline text-inherit;
-    }
+  .pdf-text-replacement {
+    @apply inline text-inherit;
+  }
+
+  .payment-qr-wrap {
+    @apply flex;
+  }
+
+  .payment-qr-wrap canvas {
+    @apply block rounded border border-neutral-200 bg-white;
+  }
 
     .btn-primary {
         @apply cursor-pointer rounded border border-brand bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-dark;
