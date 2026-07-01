@@ -207,9 +207,11 @@
           <span>Celkem k úhradě:</span>
           <strong class="text-base"><span id="grand-total">0,00</span> Kč</strong>
         </div>
-        <div id="payment-qr-wrap" class="payment-qr-wrap hidden flex-col items-center gap-1">
-          <canvas id="payment-qr-canvas" width="120" height="120" aria-hidden="true"></canvas>
-          <p class="text-invoice-sm text-neutral-500">QR platba</p>
+        <div id="payment-qr-wrap" class="payment-qr-frame hidden">
+          <div class="payment-qr-content">
+            <canvas id="payment-qr-canvas" width="120" height="120" aria-hidden="true"></canvas>
+          </div>
+          <p class="payment-qr-label">QR platba</p>
         </div>
       </div>
     </section>
