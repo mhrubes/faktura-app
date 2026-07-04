@@ -156,6 +156,26 @@ const InvoiceModel = (() => {
     }
   }
 
+  function applyPartyToForm(partyKey, party) {
+    if (!party) return;
+    if (partyKey === "supplier") {
+      setField("supplier-name", party.name);
+      setField("supplier-address", party.address);
+      setField("supplier-city", party.city);
+      setField("supplier-country", party.country);
+      setField("supplier-ico", party.ico);
+      setField("supplier-email", party.email);
+      setField("supplier-phone", party.phone);
+      return;
+    }
+    setField("customer-name", party.name);
+    setField("customer-address", party.address);
+    setField("customer-city", party.city);
+    setField("customer-country", party.country);
+    setField("customer-ico", party.ico);
+    setField("customer-dic", party.dic);
+  }
+
   function applyTemplateToInvoice(invoice, template) {
     if (!template) return invoice;
     return {
@@ -230,6 +250,7 @@ const InvoiceModel = (() => {
     defaultEmptyInvoice,
     collectFromForm,
     applyToForm,
+    applyPartyToForm,
     applyTemplateToInvoice,
     extractTemplateFromInvoice,
     calculateTotal,

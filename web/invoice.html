@@ -278,12 +278,148 @@
     </div>
   </div>
 
+  <div id="party-setup-modal" class="no-print fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="party-setup-modal-title">
+    <div id="party-setup-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
+    <div class="relative flex min-h-full items-center justify-center p-4">
+      <div class="relative w-full max-w-3xl rounded-lg bg-white p-6 shadow-xl">
+        <button type="button" id="party-setup-modal-close" class="modal-close" title="Zavřít" aria-label="Zavřít">&times;</button>
+
+        <div id="party-setup-step-intro">
+          <h2 id="party-setup-modal-title" class="mb-2 text-base font-bold text-neutral-900">Vyplnit dodavatele a odběratele?</h2>
+          <p class="mb-6 text-sm text-neutral-600">
+            U prázdné faktury můžeš doplnit identifikační údaje dodavatele a odběratele — z ARES podle IČ,
+            nebo vybrat z dříve použitých záznamů z jiných faktur.
+          </p>
+          <div class="flex justify-end gap-3">
+            <button type="button" id="party-setup-intro-skip" class="btn-secondary">Přeskočit</button>
+            <button type="button" id="party-setup-intro-yes" class="btn-primary">Ano, vyplnit</button>
+          </div>
+        </div>
+
+        <div id="party-setup-step-form" class="hidden">
+          <h2 class="mb-1 text-base font-bold text-neutral-900">Identifikační údaje</h2>
+          <p class="mb-5 text-sm text-neutral-600">Pro každou stranu zvol zdroj — prázdné pole, záznam z faktur (dodavatel i odběratel dohromady), nebo ARES podle IČ.</p>
+
+          <div class="grid gap-5 md:grid-cols-2">
+            <div class="party-setup-column">
+              <h3 class="party-setup-label">Dodavatel</h3>
+              <label class="party-setup-field-label" for="setup-supplier-source">Zdroj údajů</label>
+              <select id="setup-supplier-source" class="filter-select w-full">
+                <option value="">— prázdný dodavatel —</option>
+                <option value="existing">Z dříve použitých faktur</option>
+                <option value="__ares__">+ Načíst podle IČO (ARES)</option>
+              </select>
+
+              <div id="setup-supplier-existing-panel" class="party-setup-panel hidden">
+                <label class="party-setup-field-label" for="setup-supplier-search">Vyber nebo hledej záznam</label>
+                <div class="filter-combobox">
+                  <div class="filter-input-wrap relative">
+                    <span class="filter-input-icon" aria-hidden="true">
+                      <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                      </svg>
+                    </span>
+                    <input
+                      type="text"
+                      id="setup-supplier-search"
+                      class="filter-input w-full"
+                      autocomplete="off"
+                      spellcheck="false"
+                      placeholder="Název, IČ, DIČ nebo adresa…"
+                      role="combobox"
+                      aria-expanded="false"
+                      aria-controls="setup-supplier-suggestions"
+                      aria-autocomplete="list"
+                    />
+                    <button type="button" id="setup-supplier-search-clear" class="filter-clear hidden" title="Zrušit výběr" aria-label="Zrušit výběr">×</button>
+                    <ul id="setup-supplier-suggestions" class="filter-suggestions hidden" role="listbox"></ul>
+                  </div>
+                </div>
+                <p id="setup-supplier-existing-empty" class="mt-2 hidden text-xs text-neutral-500">Zatím žádné faktury s identifikačními údaji.</p>
+              </div>
+
+              <div id="setup-supplier-ares" class="party-setup-panel hidden">
+                <label class="party-setup-field-label" for="setup-supplier-ares-ico">IČO</label>
+                <div class="flex gap-2">
+                  <input type="text" id="setup-supplier-ares-ico" class="party-setup-ico-input" placeholder="IČO (8 číslic)" maxlength="8" inputmode="numeric" />
+                  <button type="button" id="setup-supplier-ares-btn" class="btn-secondary shrink-0">Načíst ARES</button>
+                </div>
+                <p class="mt-1.5 text-xs text-neutral-500">Zadej IČO a načti údaje z ARES.</p>
+              </div>
+
+              <div id="setup-supplier-preview" class="party-setup-preview hidden">
+                <p id="setup-supplier-preview-text"></p>
+              </div>
+            </div>
+
+            <div class="party-setup-column">
+              <h3 class="party-setup-label">Odběratel</h3>
+              <label class="party-setup-field-label" for="setup-customer-source">Zdroj údajů</label>
+              <select id="setup-customer-source" class="filter-select w-full">
+                <option value="">— prázdný odběratel —</option>
+                <option value="existing">Z dříve použitých faktur</option>
+                <option value="__ares__">+ Načíst podle IČO (ARES)</option>
+              </select>
+
+              <div id="setup-customer-existing-panel" class="party-setup-panel hidden">
+                <label class="party-setup-field-label" for="setup-customer-search">Vyber nebo hledej záznam</label>
+                <div class="filter-combobox">
+                  <div class="filter-input-wrap relative">
+                    <span class="filter-input-icon" aria-hidden="true">
+                      <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                      </svg>
+                    </span>
+                    <input
+                      type="text"
+                      id="setup-customer-search"
+                      class="filter-input w-full"
+                      autocomplete="off"
+                      spellcheck="false"
+                      placeholder="Název, IČ, DIČ nebo adresa…"
+                      role="combobox"
+                      aria-expanded="false"
+                      aria-controls="setup-customer-suggestions"
+                      aria-autocomplete="list"
+                    />
+                    <button type="button" id="setup-customer-search-clear" class="filter-clear hidden" title="Zrušit výběr" aria-label="Zrušit výběr">×</button>
+                    <ul id="setup-customer-suggestions" class="filter-suggestions hidden" role="listbox"></ul>
+                  </div>
+                </div>
+                <p id="setup-customer-existing-empty" class="mt-2 hidden text-xs text-neutral-500">Zatím žádné faktury s identifikačními údaji.</p>
+              </div>
+
+              <div id="setup-customer-ares" class="party-setup-panel hidden">
+                <label class="party-setup-field-label" for="setup-customer-ares-ico">IČO</label>
+                <div class="flex gap-2">
+                  <input type="text" id="setup-customer-ares-ico" class="party-setup-ico-input" placeholder="IČO (8 číslic)" maxlength="8" inputmode="numeric" />
+                  <button type="button" id="setup-customer-ares-btn" class="btn-secondary shrink-0">Načíst ARES</button>
+                </div>
+                <p class="mt-1.5 text-xs text-neutral-500">Zadej IČO a načti údaje z ARES.</p>
+              </div>
+
+              <div id="setup-customer-preview" class="party-setup-preview hidden">
+                <p id="setup-customer-preview-text"></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end gap-3">
+            <button type="button" id="party-setup-skip" class="btn-secondary">Přeskočit</button>
+            <button type="button" id="party-setup-confirm" class="btn-primary">Použít</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="no-print pointer-events-none fixed bottom-6 right-6 z-50 hidden rounded-lg bg-neutral-800 px-4 py-3 text-sm text-white shadow-lg"></div>
 
   <script src="js/vendor/html2pdf.bundle.min.js"></script>
   <script src="js/vendor/qrcode.min.js"></script>
   <script src="js/payment-qr.js"></script>
   <script src="js/ares.js"></script>
+  <script src="js/party-setup-modal.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/invoice-model.js"></script>
   <script src="app.js"></script>

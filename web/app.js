@@ -617,6 +617,9 @@ async function loadInvoiceFromParams() {
 }
 
 async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const isBlankInvoice = !params.get("id") && params.get("mode") !== "template";
+
   await loadInvoiceFromParams();
 
   document.getElementById("items-body").addEventListener("input", (e) => {
@@ -631,8 +634,13 @@ async function init() {
   document.getElementById("btn-save-template").addEventListener("click", saveTemplate);
   initRemoveModal();
   initTemplateSaveModal();
+  PartySetupModal.init(showToast);
   CustomerAres.init(showToast);
   PaymentQr.bindPaymentQrUpdates();
+
+  if (isBlankInvoice) {
+    await PartySetupModal.maybeOpen(showToast);
+  }
 
   const vs = document.getElementById("variable-symbol");
   const invoiceNumber = document.getElementById("invoice-number");
