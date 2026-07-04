@@ -210,7 +210,18 @@ const PartySetupModal = (() => {
       reset,
       closeSuggestions,
       getSelected() {
-        return selected;
+        if (selected) return selected;
+        const query = input.value.trim();
+        if (!query) return null;
+        const matches = allPartyOptions.filter((party) => partyMatchesQuery(party, query));
+        const exact = matches.filter(
+          (party) =>
+            normalizeText(party.name) === normalizeText(query) ||
+            String(party.ico || "").replace(/\D/g, "") === query.replace(/\D/g, "")
+        );
+        if (exact.length === 1) return exact[0];
+        if (matches.length === 1) return matches[0];
+        return null;
       },
     };
   }
@@ -325,19 +336,122 @@ const PartySetupModal = (() => {
     customerCombobox?.reset();
   }
 
+  function resolveSelection(partyKey) {
+    const source = document.getElementById(`setup-${partyKey}-source`)?.value || "";
+    if (!source) return null;
+
+    if (source === "existing") {
+      const combobox = partyKey === "supplier" ? supplierCombobox : customerCombobox;
+      return combobox?.getSelected() || null;
+    }
+
+    if (source === ARES_VALUE) {
+      const ico = String(document.getElementById(`setup-${partyKey}-ares-ico`)?.value || "").replace(/\D/g, "");
+      if (ico.length === 8) return { ico, name: "" };
+    }
+
+    return null;
+  }
+
+  function partiesAreSame(a, b) {
+    if (!a || !b) return false;
+    const icoA = String(a.ico || "").replace(/\D/g, "");
+    const icoB = String(b.ico || "").replace(/\D/g, "");
+    if (icoA.length === 8 && icoB.length === 8) return icoA === icoB;
+    const nameA = normalizeText(a.name);
+    const nameB = normalizeText(b.name);
+    return Boolean(nameA && nameB && nameA === nameB);
+  }
+
+  function formatSamePartyLabel(party) {
+    const parts = [party.name || "—"];
+    if (party.ico) parts.push(`IČ ${party.ico}`);
+    return parts.join(", ");
+  }
+
+  function openSamePartyConfirm(party) {
+    const text = document.getElementById("party-same-confirm-text");
+    if (text) {
+      text.textContent = `Dodavatel i odběratel jsou stejný subjekt (${formatSamePartyLabel(party)}). Opravdu to tak chceš?`;
+    }
+    document.getElementById("party-same-confirm-modal").classList.remove("hidden");
+    document.getElementById("party-same-confirm-yes").focus();
+  }
+
+  function closeSamePartyConfirm() {
+    document.getElementById("party-same-confirm-modal").classList.add("hidden");
+  }
+
+  async function applySetupConfirmed() {
+    await applyPartyFromSetup("supplier");
+    await applyPartyFromSetup("customer");
+    closeSamePartyConfirm();
+    close();
+    showToastFn("Údaje dodavatele a odběratele doplněny.");
+    if (typeof PaymentQr !== "undefined") PaymentQr.updatePaymentQr();
+  }
+
+  function validateBeforeApply() {
+    for (const partyKey of ["supplier", "customer"]) {
+      const source = document.getElementById(`setup-${partyKey}-source`)?.value || "";
+      if (!source) continue;
+
+      if (source === "existing") {
+        const party = resolveSelection(partyKey);
+        if (!party) {
+          throw new Error(
+            partyKey === "supplier"
+              ? "Vyber dodavatele ze seznamu (klikni na návrh)."
+              : "Vyber odběratele ze seznamu (klikni na návrh)."
+          );
+        }
+      }
+
+      if (source === ARES_VALUE) {
+        const ico = String(document.getElementById(`setup-${partyKey}-ares-ico`)?.value || "").replace(/\D/g, "");
+        if (ico.length !== 8) {
+          throw new Error(
+            partyKey === "supplier"
+              ? "Zadej platné IČO dodavatele (8 číslic)."
+              : "Zadej platné IČO odběratele (8 číslic)."
+          );
+        }
+      }
+    }
+  }
+
   async function confirmSetup() {
     const confirmBtn = document.getElementById("party-setup-confirm");
     confirmBtn.disabled = true;
     try {
-      await applyPartyFromSetup("supplier");
-      await applyPartyFromSetup("customer");
-      close();
-      showToastFn("Údaje dodavatele a odběratele doplněny.");
-      if (typeof PaymentQr !== "undefined") PaymentQr.updatePaymentQr();
+      validateBeforeApply();
+      const supplier = resolveSelection("supplier");
+      const customer = resolveSelection("customer");
+
+      if (partiesAreSame(supplier, customer)) {
+        openSamePartyConfirm(supplier?.name ? supplier : customer);
+        return;
+      }
+
+      await applySetupConfirmed();
     } catch (err) {
       showToastFn(err.message || "Doplnění údajů se nezdařilo.", "error");
     } finally {
       confirmBtn.disabled = false;
+    }
+  }
+
+  async function confirmSamePartySetup() {
+    const btn = document.getElementById("party-same-confirm-yes");
+    btn.disabled = true;
+    document.getElementById("party-setup-confirm").disabled = true;
+    try {
+      await applySetupConfirmed();
+    } catch (err) {
+      showToastFn(err.message || "Doplnění údajů se nezdařilo.", "error");
+    } finally {
+      btn.disabled = false;
+      document.getElementById("party-setup-confirm").disabled = false;
     }
   }
 
@@ -348,6 +462,11 @@ const PartySetupModal = (() => {
     document.getElementById("party-setup-confirm").addEventListener("click", confirmSetup);
     document.getElementById("party-setup-modal-close").addEventListener("click", close);
     document.getElementById("party-setup-modal-backdrop").addEventListener("click", close);
+
+    document.getElementById("party-same-confirm-cancel").addEventListener("click", closeSamePartyConfirm);
+    document.getElementById("party-same-confirm-yes").addEventListener("click", confirmSamePartySetup);
+    document.getElementById("party-same-confirm-close").addEventListener("click", closeSamePartyConfirm);
+    document.getElementById("party-same-confirm-backdrop").addEventListener("click", closeSamePartyConfirm);
 
     supplierCombobox = createPartyCombobox({
       inputId: "setup-supplier-search",
@@ -379,6 +498,11 @@ const PartySetupModal = (() => {
     });
 
     document.addEventListener("keydown", (e) => {
+      const sameModal = document.getElementById("party-same-confirm-modal");
+      if (e.key === "Escape" && sameModal && !sameModal.classList.contains("hidden")) {
+        closeSamePartyConfirm();
+        return;
+      }
       const modal = document.getElementById("party-setup-modal");
       if (e.key === "Escape" && modal && !modal.classList.contains("hidden")) {
         close();

@@ -292,6 +292,10 @@
         background-color: rgba(0, 181, 200, 0.08);
     }
 
+    #party-same-confirm-modal {
+        z-index: 60;
+    }
+
     .invoice-list-table tbody tr:last-child {
         @apply border-b-0;
     }
