@@ -631,6 +631,7 @@ async function init() {
   document.getElementById("btn-save-template").addEventListener("click", saveTemplate);
   initRemoveModal();
   initTemplateSaveModal();
+  CustomerAres.init(showToast);
   PaymentQr.bindPaymentQrUpdates();
 
   const vs = document.getElementById("variable-symbol");

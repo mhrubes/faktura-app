@@ -55,6 +55,10 @@
         @apply mt-1 flex flex-wrap items-center gap-1 text-invoice;
     }
 
+    .ico-search-btn {
+        @apply inline-flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded border-0 bg-transparent p-0 text-neutral-500 outline-none transition-colors hover:bg-neutral-100 hover:text-brand disabled:cursor-not-allowed disabled:opacity-40;
+    }
+
     .inline-short {
         @apply w-[90px] cursor-text border-0 border-b border-neutral-300 bg-transparent px-0 pb-0.5 pt-0 text-invoice text-neutral-900 outline-none transition-colors hover:border-neutral-400;
     }

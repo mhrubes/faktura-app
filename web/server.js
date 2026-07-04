@@ -4,6 +4,7 @@ const path = require("path");
 const { loadEnvFiles, isPgEnabled } = require("./env-loader");
 const { createFileStorage } = require("./storage-file");
 const { createPgStorage } = require("./storage-pg");
+const { fetchAresByIco } = require("./ares-utils");
 
 const DATA_VERSION = 1;
 
@@ -168,6 +169,16 @@ function createFakturaServer(options = {}) {
         const body = await parseBody(req);
         const result = await storage.importSqlScript(body?.sql || "");
         sendJson(res, 200, result);
+        return;
+      }
+
+      if (parts[1] === "ares" && parts.length === 3 && req.method === "GET") {
+        try {
+          const customer = await fetchAresByIco(parts[2]);
+          sendJson(res, 200, customer);
+        } catch (err) {
+          sendError(res, err.status || 502, err.message || "Vyhledání v ARES se nezdařilo.");
+        }
         return;
       }
 
