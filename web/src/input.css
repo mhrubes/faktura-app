@@ -235,11 +235,11 @@
   }
 
     .btn-primary {
-        @apply cursor-pointer rounded border border-brand bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-dark;
+        @apply enabled:cursor-pointer rounded border border-brand bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand;
     }
 
     .btn-secondary {
-        @apply cursor-pointer rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50;
+        @apply enabled:cursor-pointer rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white;
     }
 
     .btn-danger {
@@ -499,6 +499,14 @@
         @apply relative inline-flex;
     }
 
+    .btn-tooltip-wrap:has(button:disabled) {
+        @apply cursor-not-allowed;
+    }
+
+    .btn-tooltip-wrap:has(button:disabled) button:disabled {
+        @apply cursor-not-allowed;
+    }
+
     .btn-tooltip-wrap .btn-tooltip {
         @apply pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-max max-w-[220px] -translate-x-1/2 rounded-md bg-neutral-800 px-2.5 py-1.5 text-center text-xs text-white shadow-lg;
     }
@@ -718,6 +726,7 @@ body * {
     color: #cbd5e1;
 }
 .dark .btn-secondary:hover { background-color: #243244; }
+.dark .btn-secondary:disabled:hover { background-color: #1e293b; }
 
 .dark .btn-icon {
     background-color: #1e293b;

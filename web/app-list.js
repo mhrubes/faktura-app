@@ -675,10 +675,10 @@ async function updateNewInvoiceModalUi() {
   const hasInvoices = allInvoices.length > 0;
 
   templateBtn.disabled = !hasTemplate;
-  templateBtn.title = hasTemplate ? "" : "Nejdřív ulož šablonu z detailu faktury (Uložit jako šablonu).";
+  templateBtn.setAttribute("aria-disabled", hasTemplate ? "false" : "true");
 
   existingBtn.disabled = !hasInvoices;
-  existingBtn.title = hasInvoices ? "" : "Zatím nemáš žádné faktury k použití jako vzor.";
+  existingBtn.setAttribute("aria-disabled", hasInvoices ? "false" : "true");
 
   if (desc) {
     if (hasTemplate && hasInvoices) {

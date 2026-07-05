@@ -164,8 +164,14 @@
                     </p>
                     <div class="flex flex-wrap justify-end gap-2">
                         <button type="button" id="template-modal-empty" class="btn-secondary">Prázdná faktura</button>
-                        <button type="button" id="template-modal-existing" class="btn-secondary">Použít existující fakturu</button>
-                        <button type="button" id="template-modal-use" class="btn-primary">Použít šablonu</button>
+                        <span class="btn-tooltip-wrap">
+                            <button type="button" id="template-modal-existing" class="btn-secondary">Použít existující fakturu</button>
+                            <span id="template-modal-existing-tooltip" class="btn-tooltip" role="tooltip">Zatím nemáš žádné faktury k použití jako vzor.</span>
+                        </span>
+                        <span class="btn-tooltip-wrap">
+                            <button type="button" id="template-modal-use" class="btn-primary">Použít šablonu</button>
+                            <span id="template-modal-use-tooltip" class="btn-tooltip" role="tooltip">Nejdřív ulož šablonu z detailu faktury (Uložit jako šablonu).</span>
+                        </span>
                     </div>
                 </div>
             </div>
