@@ -1,307 +1,311 @@
 <!DOCTYPE html>
 <html lang="cs">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Faktury</title>
-  <script>
-    (function () {
-      try {
-        if (localStorage.getItem("faktura-theme") === "dark") {
-          document.documentElement.classList.add("dark");
-        }
-      } catch (e) {}
-    })();
-  </script>
-  <link rel="stylesheet" href="css/tailwind.css" />
-</head>
-<body class="m-0 min-h-screen bg-neutral-100 p-6 font-sans text-sm leading-snug text-neutral-900">
-  <div class="mx-auto max-w-5xl">
-    <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-neutral-900">Faktury</h1>
-        <p id="storage-hint" class="mt-1 text-neutral-600">Faktury se ukládají do složky <code class="text-xs">data/invoices/</code></p>
-      </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <button type="button" id="theme-toggle" class="theme-toggle" role="switch" aria-checked="false" aria-label="Přepnout světlý a tmavý režim" title="Světlý / tmavý režim">
-          <span class="theme-toggle-thumb">
-            <svg class="theme-icon-sun" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.95 2.05a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zm-2.05 4.95a1 1 0 01-1.414 0l-.707-.707a1 1 0 011.414-1.414l.707.707a1 1 0 010 1.414zM10 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-4.95-1.05a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zM4 10a1 1 0 01-1 1H2a1 1 0 110-2h1a1 1 0 011 1zm1.05-4.95a1 1 0 011.414 0l.707.707A1 1 0 015.757 7.17l-.707-.707a1 1 0 010-1.414zM10 7a3 3 0 100 6 3 3 0 000-6z" clip-rule="evenodd"/></svg>
-            <svg class="theme-icon-moon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
-          </span>
-        </button>
-        <label id="import-label" class="btn-secondary cursor-pointer">
-          Importovat .json
-          <input type="file" id="import-file" accept=".json,application/json,.txt,text/plain" class="hidden" />
-        </label>
-        <span class="btn-tooltip-wrap" id="export-btn-wrap">
-          <button type="button" id="btn-export" class="btn-secondary" disabled>Exportovat</button>
-          <span class="btn-tooltip" role="tooltip">Žádné faktury k exportu</span>
-        </span>
-        <button type="button" id="btn-new-invoice" class="btn-primary">+ Nová faktura</button>
-      </div>
-    </header>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Faktury</title>
+        <script>
+            ;(function () {
+                try {
+                    if (localStorage.getItem('faktura-theme') === 'dark') {
+                        document.documentElement.classList.add('dark')
+                    }
+                } catch (e) {}
+            })()
+        </script>
+        <link rel="stylesheet" href="css/tailwind.css" />
+    </head>
+    <body class="m-0 min-h-screen bg-neutral-100 p-6 font-sans text-sm leading-snug text-neutral-900">
+        <div class="mx-auto max-w-5xl">
+            <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-neutral-900">Faktury</h1>
+                    <p id="storage-hint" class="mt-1 text-neutral-600">Faktury se ukládají do složky <code class="text-xs">data/invoices/</code></p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button type="button" id="theme-toggle" class="theme-toggle" role="switch" aria-checked="false" aria-label="Přepnout světlý a tmavý režim" title="Světlý / tmavý režim">
+                        <span class="theme-toggle-thumb">
+                            <svg class="theme-icon-sun" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.95 2.05a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zm-2.05 4.95a1 1 0 01-1.414 0l-.707-.707a1 1 0 011.414-1.414l.707.707a1 1 0 010 1.414zM10 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-4.95-1.05a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zM4 10a1 1 0 01-1 1H2a1 1 0 110-2h1a1 1 0 011 1zm1.05-4.95a1 1 0 011.414 0l.707.707A1 1 0 015.757 7.17l-.707-.707a1 1 0 010-1.414zM10 7a3 3 0 100 6 3 3 0 000-6z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                            <svg class="theme-icon-moon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /></svg>
+                        </span>
+                    </button>
+                    <label id="import-label" class="btn-secondary cursor-pointer">
+                        Importovat .json
+                        <input type="file" id="import-file" accept=".json,application/json,.txt,text/plain" class="hidden" />
+                    </label>
+                    <span class="btn-tooltip-wrap" id="export-btn-wrap">
+                        <button type="button" id="btn-export" class="btn-secondary" disabled>Exportovat</button>
+                        <span class="btn-tooltip" role="tooltip">Žádné faktury k exportu</span>
+                    </span>
+                    <button type="button" id="btn-new-invoice" class="btn-primary">+ Nová faktura</button>
+                </div>
+            </header>
 
-    <div id="server-error" class="mb-6 hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"></div>
+            <div id="server-error" class="mb-6 hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"></div>
 
-    <div id="template-banner" class="mb-6 hidden rounded-lg border border-brand/30 bg-brand-light px-4 py-3 text-sm text-neutral-800">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <span class="font-medium text-brand-dark">Uložená šablona je k dispozici</span>
-          <span id="template-banner-info" class="hidden font-medium text-brand-dark"></span>
-          <span class="text-neutral-600"> — při nové faktuře se zeptáme, zda ji použít (dodavatel, odběratel, platba, položky).</span>
-        </div>
-        <button type="button" id="btn-delete-template" class="btn-icon btn-icon-danger shrink-0" title="Smazat šablonu" aria-label="Smazat uloženou šablonu">
-          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-neutral-200">
-      <div id="empty-state" class="hidden px-6 py-16 text-center">
-        <p class="text-lg font-medium text-neutral-800">Zatím žádné faktury</p>
-        <p class="mt-2 text-neutral-600">Vytvoř novou fakturu nebo importuj existující .json soubor.</p>
-        <button type="button" id="btn-new-empty" class="btn-primary mt-6">Vytvořit první fakturu</button>
-      </div>
-
-      <div id="filters-bar" class="hidden border-b border-neutral-200 bg-gradient-to-r from-neutral-50 to-brand-light/30 px-5 py-4">
-        <div class="flex flex-wrap items-end gap-x-4 gap-y-3">
-          <div class="filter-combobox min-w-[220px] flex-1">
-            <label for="filter-customer" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500">
-              Filtr odběratele
-            </label>
-            <div class="filter-input-wrap relative">
-              <span class="filter-input-icon" aria-hidden="true">
-                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
-                </svg>
-              </span>
-              <input
-                type="text"
-                id="filter-customer"
-                class="filter-input"
-                autocomplete="off"
-                spellcheck="false"
-                placeholder="Název, IČ nebo DIČ…"
-                role="combobox"
-                aria-expanded="false"
-                aria-controls="filter-suggestions"
-                aria-autocomplete="list"
-              />
-              <button type="button" id="filter-clear-customer" class="filter-clear hidden" title="Zrušit filtr odběratele" aria-label="Zrušit filtr odběratele">×</button>
-              <ul id="filter-suggestions" class="filter-suggestions hidden" role="listbox"></ul>
-            </div>
-          </div>
-
-          <div class="filter-date-field shrink-0">
-            <label for="filter-year" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500">
-              Datum vystavení
-            </label>
-            <div class="flex items-center gap-1.5">
-              <select id="filter-year" class="filter-select filter-select-year" title="Rok">
-                <option value="">Rok</option>
-              </select>
-              <select id="filter-month" class="filter-select filter-select-month" disabled title="Měsíc">
-                <option value="">Měsíc</option>
-              </select>
-              <select id="filter-day" class="filter-select filter-select-day" disabled title="Den">
-                <option value="">Den</option>
-              </select>
-              <button
-                type="button"
-                id="filter-clear-dates"
-                class="filter-clear-dates hidden"
-                title="Zrušit filtr data"
-                aria-label="Zrušit filtr data"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-1.5 flex flex-wrap items-center justify-between gap-2">
-          <p class="text-xs text-neutral-500">Začni psát — nabídneme odběratele podle jména, IČ nebo DIČ.</p>
-          <p id="filter-result-count" class="text-xs text-neutral-600"></p>
-        </div>
-      </div>
-
-      <div id="filter-empty-state" class="hidden px-6 py-12 text-center">
-        <p class="text-base font-medium text-neutral-800">Žádná faktura neodpovídá filtru</p>
-        <p class="mt-2 text-sm text-neutral-600">Zkus upravit filtr odběratele nebo datum vystavení.</p>
-        <button type="button" id="btn-clear-filter" class="btn-secondary mt-5">Zrušit všechny filtry</button>
-      </div>
-
-      <div id="bulk-actions" class="hidden items-center justify-between gap-3 border-b border-neutral-200 bg-brand-light/60 px-5 py-3">
-        <span id="bulk-count" class="text-sm font-medium text-neutral-700"></span>
-        <div class="flex flex-wrap items-center gap-2">
-          <button type="button" id="btn-bulk-resolve" class="btn-secondary">Označit jako vyřízené</button>
-          <button type="button" id="btn-bulk-unresolve" class="btn-secondary">Zrušit vyřízeno</button>
-          <button type="button" id="btn-bulk-clear" class="btn-secondary">Zrušit výběr</button>
-          <button type="button" id="btn-bulk-delete" class="btn-danger">Smazat označené</button>
-        </div>
-      </div>
-
-      <div id="invoice-list-wrap" class="overflow-x-auto">
-        <table class="invoice-list-table w-full min-w-[760px] border-collapse text-left">
-          <thead>
-            <tr class="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
-              <th class="w-px px-5 py-3">
-                <input type="checkbox" id="select-all" class="h-4 w-4 cursor-pointer accent-brand align-middle" aria-label="Vybrat vše" />
-              </th>
-              <th class="px-5 py-3 font-semibold">
-                <button type="button" class="sort-btn" data-sort="number">Číslo <span class="sort-indicator" aria-hidden="true"></span></button>
-              </th>
-              <th class="px-5 py-3 font-semibold">
-                <button type="button" class="sort-btn" data-sort="customer">Odběratel <span class="sort-indicator" aria-hidden="true"></span></button>
-              </th>
-              <th class="px-5 py-3 font-semibold">
-                <button type="button" class="sort-btn" data-sort="issue">Vystaveno <span class="sort-indicator" aria-hidden="true"></span></button>
-              </th>
-              <th class="px-5 py-3 font-semibold text-right">
-                <button type="button" class="sort-btn sort-btn-right" data-sort="total">Částka <span class="sort-indicator" aria-hidden="true"></span></button>
-              </th>
-              <th class="px-5 py-3 font-semibold">Uloženo</th>
-              <th class="px-5 py-3 font-semibold text-right">Akce</th>
-            </tr>
-          </thead>
-          <tbody id="invoice-list"></tbody>
-        </table>
-      </div>
-    </section>
-  </div>
-
-  <div id="template-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="template-modal-title">
-    <div id="template-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
-    <div class="relative flex min-h-full items-center justify-center p-4">
-      <div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <button type="button" id="template-modal-close" class="modal-close" title="Zavřít" aria-label="Zavřít">&times;</button>
-        <h2 id="template-modal-title" class="mb-2 text-base font-bold text-neutral-900">Použít uloženou šablonu?</h2>
-        <p class="mb-6 text-sm text-neutral-600">
-          Máš uloženou šablonu s údaji dodavatele a platebních informací. Chceš ji použít pro novou fakturu?
-        </p>
-        <div class="flex justify-end gap-3">
-          <button type="button" id="template-modal-empty" class="btn-secondary">Prázdná faktura</button>
-          <button type="button" id="template-modal-use" class="btn-primary">Použít šablonu</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="delete-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
-    <div id="delete-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
-    <div class="relative flex min-h-full items-center justify-center p-4">
-      <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h2 id="delete-modal-title" class="mb-2 text-base font-bold text-neutral-900">Smazat fakturu?</h2>
-        <p id="delete-modal-text" class="mb-6 text-sm text-neutral-600">Opravdu chcete tuto fakturu smazat?</p>
-        <div class="flex justify-end gap-3">
-          <button type="button" id="delete-modal-cancel" class="btn-secondary">Zrušit</button>
-          <button type="button" id="delete-modal-confirm" class="btn-danger">Smazat</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="bulk-delete-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="bulk-delete-modal-title">
-    <div id="bulk-delete-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
-    <div class="relative flex min-h-full items-center justify-center p-4">
-      <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h2 id="bulk-delete-modal-title" class="mb-2 text-base font-bold text-neutral-900">Smazat označené faktury?</h2>
-        <p id="bulk-delete-modal-text" class="mb-6 text-sm text-neutral-600"></p>
-        <div class="flex justify-end gap-3">
-          <button type="button" id="bulk-delete-modal-cancel" class="btn-secondary">Zrušit</button>
-          <button type="button" id="bulk-delete-modal-confirm" class="btn-danger">Smazat</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="template-delete-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="template-delete-modal-title">
-    <div id="template-delete-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
-    <div class="relative flex min-h-full items-center justify-center p-4">
-      <div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <button type="button" id="template-delete-modal-close" class="modal-close" title="Zavřít" aria-label="Zavřít">&times;</button>
-        <h2 id="template-delete-modal-title" class="mb-2 text-base font-bold text-neutral-900">Smazat uloženou šablonu?</h2>
-        <p class="mb-6 text-sm text-neutral-600">Uložená šablona dodavatele a platebních údajů bude odstraněna. Tuto akci nelze vrátit.</p>
-        <div class="flex justify-end gap-3">
-          <button type="button" id="template-delete-modal-cancel" class="btn-secondary">Zrušit</button>
-          <button type="button" id="template-delete-modal-confirm" class="btn-danger">Smazat</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="export-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
-    <div id="export-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
-    <div class="relative flex min-h-full items-center justify-center p-4">
-      <div class="relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
-        <button type="button" id="export-modal-close" class="modal-close" title="Zavřít" aria-label="Zavřít">&times;</button>
-        <h2 id="export-modal-title" class="mb-1 text-base font-bold text-neutral-900">Export faktur</h2>
-        <p id="export-modal-desc" class="mb-5 text-sm text-neutral-600">Vyber filtry — exportují se jen odpovídající faktury do jednoho .json souboru.</p>
-
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50/80 p-4">
-          <div class="flex flex-wrap items-end gap-x-4 gap-y-3">
-            <div class="filter-combobox min-w-[200px] flex-1">
-              <label for="export-filter-customer" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Filtr odběratele
-              </label>
-              <div class="filter-input-wrap relative">
-                <span class="filter-input-icon" aria-hidden="true">
-                  <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
-                  </svg>
-                </span>
-                <input
-                  type="text"
-                  id="export-filter-customer"
-                  class="filter-input"
-                  autocomplete="off"
-                  spellcheck="false"
-                  placeholder="Název, IČ nebo DIČ…"
-                  role="combobox"
-                  aria-expanded="false"
-                  aria-controls="export-filter-suggestions"
-                  aria-autocomplete="list"
-                />
-                <button type="button" id="export-filter-clear-customer" class="filter-clear hidden" title="Zrušit filtr odběratele" aria-label="Zrušit filtr odběratele">×</button>
-                <ul id="export-filter-suggestions" class="filter-suggestions hidden" role="listbox"></ul>
-              </div>
+            <div id="template-banner" class="mb-6 hidden rounded-lg border border-brand/30 bg-brand-light px-4 py-3 text-sm text-neutral-800">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <span class="font-medium text-brand-dark">Uložená šablona je k dispozici</span>
+                        <span id="template-banner-info" class="hidden font-medium text-brand-dark"></span>
+                        <span class="text-neutral-600"> — při nové faktuře se zeptáme, zda ji použít (dodavatel, odběratel, platba, položky).</span>
+                    </div>
+                    <button type="button" id="btn-delete-template" class="btn-icon btn-icon-danger shrink-0" title="Smazat šablonu" aria-label="Smazat uloženou šablonu">
+                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
             </div>
 
-            <div class="filter-date-field shrink-0">
-              <label for="export-filter-year" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                Datum vystavení
-              </label>
-              <div class="flex items-center gap-1.5">
-                <select id="export-filter-year" class="filter-select filter-select-year" title="Rok">
-                  <option value="">Rok</option>
-                </select>
-                <select id="export-filter-month" class="filter-select filter-select-month" disabled title="Měsíc">
-                  <option value="">Měsíc</option>
-                </select>
-                <select id="export-filter-day" class="filter-select filter-select-day" disabled title="Den">
-                  <option value="">Den</option>
-                </select>
-                <button type="button" id="export-filter-clear-dates" class="filter-clear-dates hidden" title="Zrušit filtr data" aria-label="Zrušit filtr data">×</button>
-              </div>
+            <section class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-neutral-200">
+                <div id="empty-state" class="hidden px-6 py-16 text-center">
+                    <p class="text-lg font-medium text-neutral-800">Zatím žádné faktury</p>
+                    <p class="mt-2 text-neutral-600">Vytvoř novou fakturu nebo importuj existující .json soubor.</p>
+                    <button type="button" id="btn-new-empty" class="btn-primary mt-6">Vytvořit první fakturu</button>
+                </div>
+
+                <div id="filters-bar" class="hidden border-b border-neutral-200 bg-gradient-to-r from-neutral-50 to-brand-light/30 px-5 py-4">
+                    <div class="flex flex-wrap items-end gap-x-4 gap-y-3">
+                        <div class="filter-combobox min-w-[220px] flex-1">
+                            <label for="filter-customer" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500"> Filtr odběratele </label>
+                            <div class="filter-input-wrap relative">
+                                <span class="filter-input-icon" aria-hidden="true">
+                                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                                <input type="text" id="filter-customer" class="filter-input" autocomplete="off" spellcheck="false" placeholder="Název, IČ nebo DIČ…" role="combobox" aria-expanded="false" aria-controls="filter-suggestions" aria-autocomplete="list" />
+                                <button type="button" id="filter-clear-customer" class="filter-clear hidden" title="Zrušit filtr odběratele" aria-label="Zrušit filtr odběratele">×</button>
+                                <ul id="filter-suggestions" class="filter-suggestions hidden" role="listbox"></ul>
+                            </div>
+                        </div>
+
+                        <div class="filter-date-field shrink-0">
+                            <label for="filter-year" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500"> Datum vystavení </label>
+                            <div class="flex items-center gap-1.5">
+                                <select id="filter-year" class="filter-select filter-select-year" title="Rok">
+                                    <option value="">Rok</option>
+                                </select>
+                                <select id="filter-month" class="filter-select filter-select-month" disabled title="Měsíc">
+                                    <option value="">Měsíc</option>
+                                </select>
+                                <select id="filter-day" class="filter-select filter-select-day" disabled title="Den">
+                                    <option value="">Den</option>
+                                </select>
+                                <button type="button" id="filter-clear-dates" class="filter-clear-dates hidden" title="Zrušit filtr data" aria-label="Zrušit filtr data">×</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+                        <p class="text-xs text-neutral-500">Začni psát — nabídneme odběratele podle jména, IČ nebo DIČ.</p>
+                        <p id="filter-result-count" class="text-xs text-neutral-600"></p>
+                    </div>
+                </div>
+
+                <div id="filter-empty-state" class="hidden px-6 py-12 text-center">
+                    <p class="text-base font-medium text-neutral-800">Žádná faktura neodpovídá filtru</p>
+                    <p class="mt-2 text-sm text-neutral-600">Zkus upravit filtr odběratele nebo datum vystavení.</p>
+                    <button type="button" id="btn-clear-filter" class="btn-secondary mt-5">Zrušit všechny filtry</button>
+                </div>
+
+                <div id="bulk-actions" class="hidden items-center justify-between gap-3 border-b border-neutral-200 bg-brand-light/60 px-5 py-3">
+                    <span id="bulk-count" class="text-sm font-medium text-neutral-700"></span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" id="btn-bulk-resolve" class="btn-secondary">Označit jako vyřízené</button>
+                        <button type="button" id="btn-bulk-unresolve" class="btn-secondary">Zrušit vyřízeno</button>
+                        <button type="button" id="btn-bulk-clear" class="btn-secondary">Zrušit výběr</button>
+                        <button type="button" id="btn-bulk-delete" class="btn-danger">Smazat označené</button>
+                    </div>
+                </div>
+
+                <div id="invoice-list-wrap" class="overflow-x-auto">
+                    <table class="invoice-list-table w-full min-w-[760px] border-collapse text-left">
+                        <thead>
+                            <tr class="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500">
+                                <th class="w-px px-5 py-3">
+                                    <input type="checkbox" id="select-all" class="h-4 w-4 cursor-pointer accent-brand align-middle" aria-label="Vybrat vše" />
+                                </th>
+                                <th class="px-5 py-3 font-semibold">
+                                    <button type="button" class="sort-btn" data-sort="number">Číslo <span class="sort-indicator" aria-hidden="true"></span></button>
+                                </th>
+                                <th class="px-5 py-3 font-semibold">
+                                    <button type="button" class="sort-btn" data-sort="customer">Odběratel <span class="sort-indicator" aria-hidden="true"></span></button>
+                                </th>
+                                <th class="px-5 py-3 font-semibold">
+                                    <button type="button" class="sort-btn" data-sort="issue">Vystaveno <span class="sort-indicator" aria-hidden="true"></span></button>
+                                </th>
+                                <th class="px-5 py-3 font-semibold text-right">
+                                    <button type="button" class="sort-btn sort-btn-right" data-sort="total">Částka <span class="sort-indicator" aria-hidden="true"></span></button>
+                                </th>
+                                <th class="px-5 py-3 font-semibold">Uloženo</th>
+                                <th class="px-5 py-3 font-semibold text-right">Akce</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoice-list"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <div id="template-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="template-modal-title">
+            <div id="template-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
+            <div class="relative flex min-h-full items-center justify-center p-4">
+                <div class="relative w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+                    <button type="button" id="template-modal-close" class="modal-close" title="Zavřít" aria-label="Zavřít">&times;</button>
+                    <h2 id="template-modal-title" class="mb-2 text-base font-bold text-neutral-900">Použít uloženou šablonu?</h2>
+                    <p class="mb-6 text-sm text-neutral-600">Máš uloženou šablonu s údaji dodavatele a platebních informací. Chceš ji použít pro novou fakturu?</p>
+                    <div class="flex flex-wrap justify-end gap-2">
+                        <button type="button" id="template-modal-empty" class="btn-secondary">Prázdná faktura</button>
+                        <button type="button" id="template-modal-existing" class="btn-secondary">Použít existující fakturu</button>
+                        <button type="button" id="template-modal-use" class="btn-primary">Použít šablonu</button>
+                    </div>
+                </div>
             </div>
-          </div>
-          <p id="export-filter-count" class="mt-3 text-sm text-neutral-600">0 faktur k exportu</p>
         </div>
 
-        <div class="mt-6 flex justify-end gap-3">
-          <button type="button" id="export-modal-cancel" class="btn-secondary">Zrušit</button>
-          <button type="button" id="export-modal-confirm" class="btn-primary" disabled>Exportovat .json</button>
+        <div id="existing-invoice-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="existing-invoice-modal-title">
+            <div id="existing-invoice-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
+            <div class="relative flex min-h-full items-center justify-center p-4">
+                <div class="relative w-full max-w-3xl rounded-lg bg-white p-6 shadow-xl">
+                    <button type="button" id="existing-invoice-modal-close" class="modal-close" title="Zavřít" aria-label="Zavřít">&times;</button>
+                    <h2 id="existing-invoice-modal-title" class="mb-1 text-base font-bold text-neutral-900">Použít existující fakturu</h2>
+                    <p class="mb-4 text-sm text-neutral-600">Vyber fakturu jako vzor — otevře se nová faktura s vyplněnými údaji, které můžeš upravit.</p>
+
+                    <label for="existing-invoice-select" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500"> Faktura </label>
+                    <select id="existing-invoice-select" class="filter-select w-full"></select>
+
+                    <div id="existing-invoice-preview-layout" class="existing-invoice-preview-layout mt-4">
+                        <p class="mb-2 text-xs text-neutral-500">Náhled faktury — najetím kurzorem zvětšíš detail vedle okna.</p>
+                        <div id="existing-invoice-preview-viewport" class="invoice-preview-viewport">
+                            <div id="existing-invoice-preview-mini"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+                        <button type="button" id="existing-invoice-back" class="btn-secondary">Zpět</button>
+                        <div class="flex flex-wrap justify-end gap-2">
+                            <button type="button" id="existing-invoice-cancel" class="btn-secondary">Zrušit</button>
+                            <button type="button" id="existing-invoice-use" class="btn-primary" disabled>Použít</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <div id="toast" class="pointer-events-none fixed bottom-6 right-6 z-50 hidden rounded-lg bg-neutral-800 px-4 py-3 text-sm text-white shadow-lg"></div>
+        <div id="existing-invoice-preview-zoom" class="invoice-preview-loupe-floating hidden" aria-hidden="true">
+            <div class="invoice-preview-loupe-label">Přiblížení</div>
+            <div class="invoice-preview-loupe-viewport">
+                <div id="existing-invoice-preview-loupe-pan" class="invoice-preview-loupe-pan"></div>
+            </div>
+        </div>
 
-  <script src="sql-export.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/invoice-model.js"></script>
-  <script src="js/invoice-filters.js"></script>
-  <script src="app-list.js"></script>
-</body>
+        <div id="delete-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+            <div id="delete-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
+            <div class="relative flex min-h-full items-center justify-center p-4">
+                <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+                    <h2 id="delete-modal-title" class="mb-2 text-base font-bold text-neutral-900">Smazat fakturu?</h2>
+                    <p id="delete-modal-text" class="mb-6 text-sm text-neutral-600">Opravdu chcete tuto fakturu smazat?</p>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" id="delete-modal-cancel" class="btn-secondary">Zrušit</button>
+                        <button type="button" id="delete-modal-confirm" class="btn-danger">Smazat</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="bulk-delete-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="bulk-delete-modal-title">
+            <div id="bulk-delete-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
+            <div class="relative flex min-h-full items-center justify-center p-4">
+                <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+                    <h2 id="bulk-delete-modal-title" class="mb-2 text-base font-bold text-neutral-900">Smazat označené faktury?</h2>
+                    <p id="bulk-delete-modal-text" class="mb-6 text-sm text-neutral-600"></p>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" id="bulk-delete-modal-cancel" class="btn-secondary">Zrušit</button>
+                        <button type="button" id="bulk-delete-modal-confirm" class="btn-danger">Smazat</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="template-delete-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="template-delete-modal-title">
+            <div id="template-delete-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
+            <div class="relative flex min-h-full items-center justify-center p-4">
+                <div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+                    <button type="button" id="template-delete-modal-close" class="modal-close" title="Zavřít" aria-label="Zavřít">&times;</button>
+                    <h2 id="template-delete-modal-title" class="mb-2 text-base font-bold text-neutral-900">Smazat uloženou šablonu?</h2>
+                    <p class="mb-6 text-sm text-neutral-600">Uložená šablona dodavatele a platebních údajů bude odstraněna. Tuto akci nelze vrátit.</p>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" id="template-delete-modal-cancel" class="btn-secondary">Zrušit</button>
+                        <button type="button" id="template-delete-modal-confirm" class="btn-danger">Smazat</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="export-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
+            <div id="export-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
+            <div class="relative flex min-h-full items-center justify-center p-4">
+                <div class="relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
+                    <button type="button" id="export-modal-close" class="modal-close" title="Zavřít" aria-label="Zavřít">&times;</button>
+                    <h2 id="export-modal-title" class="mb-1 text-base font-bold text-neutral-900">Export faktur</h2>
+                    <p id="export-modal-desc" class="mb-5 text-sm text-neutral-600">Vyber filtry — exportují se jen odpovídající faktury do jednoho .json souboru.</p>
+
+                    <div class="rounded-lg border border-neutral-200 bg-neutral-50/80 p-4">
+                        <div class="flex flex-wrap items-end gap-x-4 gap-y-3">
+                            <div class="filter-combobox min-w-[200px] flex-1">
+                                <label for="export-filter-customer" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500"> Filtr odběratele </label>
+                                <div class="filter-input-wrap relative">
+                                    <span class="filter-input-icon" aria-hidden="true">
+                                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                                        </svg>
+                                    </span>
+                                    <input type="text" id="export-filter-customer" class="filter-input" autocomplete="off" spellcheck="false" placeholder="Název, IČ nebo DIČ…" role="combobox" aria-expanded="false" aria-controls="export-filter-suggestions" aria-autocomplete="list" />
+                                    <button type="button" id="export-filter-clear-customer" class="filter-clear hidden" title="Zrušit filtr odběratele" aria-label="Zrušit filtr odběratele">×</button>
+                                    <ul id="export-filter-suggestions" class="filter-suggestions hidden" role="listbox"></ul>
+                                </div>
+                            </div>
+
+                            <div class="filter-date-field shrink-0">
+                                <label for="export-filter-year" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500"> Datum vystavení </label>
+                                <div class="flex items-center gap-1.5">
+                                    <select id="export-filter-year" class="filter-select filter-select-year" title="Rok">
+                                        <option value="">Rok</option>
+                                    </select>
+                                    <select id="export-filter-month" class="filter-select filter-select-month" disabled title="Měsíc">
+                                        <option value="">Měsíc</option>
+                                    </select>
+                                    <select id="export-filter-day" class="filter-select filter-select-day" disabled title="Den">
+                                        <option value="">Den</option>
+                                    </select>
+                                    <button type="button" id="export-filter-clear-dates" class="filter-clear-dates hidden" title="Zrušit filtr data" aria-label="Zrušit filtr data">×</button>
+                                </div>
+                            </div>
+                        </div>
+                        <p id="export-filter-count" class="mt-3 text-sm text-neutral-600">0 faktur k exportu</p>
+                    </div>
+
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" id="export-modal-cancel" class="btn-secondary">Zrušit</button>
+                        <button type="button" id="export-modal-confirm" class="btn-primary" disabled>Exportovat .json</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="toast" class="pointer-events-none fixed bottom-6 right-6 z-50 hidden rounded-lg bg-neutral-800 px-4 py-3 text-sm text-white shadow-lg"></div>
+
+        <script src="sql-export.js"></script>
+        <script src="js/storage.js"></script>
+        <script src="js/invoice-model.js"></script>
+        <script src="js/invoice-preview.js"></script>
+        <script src="js/invoice-filters.js"></script>
+        <script src="app-list.js"></script>
+    </body>
 </html>

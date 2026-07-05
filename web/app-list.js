@@ -604,7 +604,71 @@ function navigateToNewInvoice(mode) {
   window.location.href = `invoice.html?mode=${mode}`;
 }
 
+function getExistingInvoiceOptions() {
+  return [...allInvoices].sort((a, b) => {
+    const issueCmp = String(b.dates?.issue || "").localeCompare(String(a.dates?.issue || ""));
+    if (issueCmp !== 0) return issueCmp;
+    return String(b.invoiceNumber || "").localeCompare(String(a.invoiceNumber || ""), "cs", {
+      numeric: true,
+    });
+  });
+}
+
+function formatPreviewMoney(invoice) {
+  return InvoiceModel.calculateTotal(invoice).toLocaleString("cs-CZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function getSelectedExistingInvoice() {
+  const id = document.getElementById("existing-invoice-select")?.value;
+  if (!id) return null;
+  return allInvoices.find((invoice) => invoice.id === id) || null;
+}
+
+function updateExistingInvoicePreview() {
+  const invoice = getSelectedExistingInvoice();
+  const mini = document.getElementById("existing-invoice-preview-mini");
+  const loupePan = document.getElementById("existing-invoice-preview-loupe-pan");
+  const useBtn = document.getElementById("existing-invoice-use");
+  const zoom = document.getElementById("existing-invoice-preview-zoom");
+  const viewport = document.getElementById("existing-invoice-preview-viewport");
+
+  InvoicePreview.render(mini, loupePan, invoice, viewport);
+  zoom?.classList.add("hidden");
+  if (useBtn) useBtn.disabled = !invoice;
+}
+
+function populateExistingInvoiceSelect() {
+  const select = document.getElementById("existing-invoice-select");
+  if (!select) return;
+
+  const invoices = getExistingInvoiceOptions();
+  select.innerHTML = invoices
+    .map((invoice) => {
+      const number = escapeHtml(invoice.invoiceNumber || "—");
+      const customer = escapeHtml(invoice.customer?.name || "—");
+      const issue = escapeHtml(InvoiceModel.formatDateCs(invoice.dates?.issue));
+      const total = escapeHtml(formatPreviewMoney(invoice));
+      return `<option value="${escapeHtml(invoice.id)}">${number} · ${customer} · ${issue} · ${total} Kč</option>`;
+    })
+    .join("");
+
+  updateExistingInvoicePreview();
+}
+
+function updateTemplateExistingButton() {
+  const btn = document.getElementById("template-modal-existing");
+  if (!btn) return;
+
+  const hasInvoices = allInvoices.length > 0;
+  btn.disabled = !hasInvoices;
+  btn.title = hasInvoices ? "" : "Zatím nemáš žádné faktury k použití jako vzor.";
+}
+
 function openTemplateModal() {
+  updateTemplateExistingButton();
   document.getElementById("template-modal").classList.remove("hidden");
   document.body.classList.add("overflow-hidden");
   document.getElementById("template-modal-use").focus();
@@ -613,6 +677,43 @@ function openTemplateModal() {
 function closeTemplateModal() {
   document.getElementById("template-modal").classList.add("hidden");
   document.body.classList.remove("overflow-hidden");
+}
+
+function openExistingInvoiceModal() {
+  if (!allInvoices.length) return;
+
+  document.getElementById("template-modal").classList.add("hidden");
+  populateExistingInvoiceSelect();
+  document.getElementById("existing-invoice-modal").classList.remove("hidden");
+  document.body.classList.add("overflow-hidden");
+  document.getElementById("existing-invoice-select")?.focus();
+}
+
+function closeExistingInvoiceModal() {
+  document.getElementById("existing-invoice-modal").classList.add("hidden");
+  document.getElementById("existing-invoice-preview-zoom")?.classList.add("hidden");
+  document.body.classList.remove("overflow-hidden");
+}
+
+function backToTemplateModal() {
+  closeExistingInvoiceModal();
+  openTemplateModal();
+}
+
+function confirmExistingInvoice() {
+  const invoice = getSelectedExistingInvoice();
+  if (!invoice?.id) return;
+  closeExistingInvoiceModal();
+  openInvoiceCopy(invoice.id);
+}
+
+function bindExistingInvoicePreviewHover() {
+  InvoicePreview.bindMagnifier({
+    viewport: document.getElementById("existing-invoice-preview-viewport"),
+    loupe: document.getElementById("existing-invoice-preview-zoom"),
+    loupePan: document.getElementById("existing-invoice-preview-loupe-pan"),
+    getInvoice: getSelectedExistingInvoice,
+  });
 }
 
 async function handleNewInvoice() {
@@ -833,8 +934,17 @@ function initModals() {
     closeTemplateModal();
     navigateToNewInvoice("empty");
   });
+  document.getElementById("template-modal-existing").addEventListener("click", openExistingInvoiceModal);
   document.getElementById("template-modal-backdrop").addEventListener("click", closeTemplateModal);
   document.getElementById("template-modal-close").addEventListener("click", closeTemplateModal);
+
+  document.getElementById("existing-invoice-select").addEventListener("change", updateExistingInvoicePreview);
+  document.getElementById("existing-invoice-back").addEventListener("click", backToTemplateModal);
+  document.getElementById("existing-invoice-cancel").addEventListener("click", closeExistingInvoiceModal);
+  document.getElementById("existing-invoice-use").addEventListener("click", confirmExistingInvoice);
+  document.getElementById("existing-invoice-modal-backdrop").addEventListener("click", closeExistingInvoiceModal);
+  document.getElementById("existing-invoice-modal-close").addEventListener("click", closeExistingInvoiceModal);
+  bindExistingInvoicePreviewHover();
 
   document.getElementById("delete-modal-cancel").addEventListener("click", closeDeleteModal);
   document.getElementById("delete-modal-confirm").addEventListener("click", confirmDelete);
@@ -876,6 +986,10 @@ function initModals() {
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     if (!document.getElementById("export-modal").classList.contains("hidden")) closeExportModal();
+    if (!document.getElementById("existing-invoice-modal").classList.contains("hidden")) {
+      backToTemplateModal();
+      return;
+    }
     if (!document.getElementById("template-modal").classList.contains("hidden")) closeTemplateModal();
     if (!document.getElementById("delete-modal").classList.contains("hidden")) closeDeleteModal();
     if (!document.getElementById("bulk-delete-modal").classList.contains("hidden")) closeBulkDeleteModal();
