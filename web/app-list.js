@@ -658,20 +658,54 @@ function populateExistingInvoiceSelect() {
   updateExistingInvoicePreview();
 }
 
-function updateTemplateExistingButton() {
-  const btn = document.getElementById("template-modal-existing");
-  if (!btn) return;
+async function updateNewInvoiceModalUi() {
+  const templateBtn = document.getElementById("template-modal-use");
+  const existingBtn = document.getElementById("template-modal-existing");
+  const emptyBtn = document.getElementById("template-modal-empty");
+  const desc = document.getElementById("template-modal-desc");
+  if (!templateBtn || !existingBtn || !emptyBtn) return;
+
+  let hasTemplate = false;
+  try {
+    hasTemplate = await FakturaStorage.hasTemplate();
+  } catch {
+    hasTemplate = false;
+  }
 
   const hasInvoices = allInvoices.length > 0;
-  btn.disabled = !hasInvoices;
-  btn.title = hasInvoices ? "" : "Zatím nemáš žádné faktury k použití jako vzor.";
+
+  templateBtn.disabled = !hasTemplate;
+  templateBtn.title = hasTemplate ? "" : "Nejdřív ulož šablonu z detailu faktury (Uložit jako šablonu).";
+
+  existingBtn.disabled = !hasInvoices;
+  existingBtn.title = hasInvoices ? "" : "Zatím nemáš žádné faktury k použití jako vzor.";
+
+  if (desc) {
+    if (hasTemplate && hasInvoices) {
+      desc.textContent =
+        "Vyber, jak chceš začít — prázdná faktura, kopie existující faktury, nebo uložená šablona (dodavatel, odběratel, platba, položky).";
+    } else if (hasTemplate) {
+      desc.textContent =
+        "Vyber, jak chceš začít — prázdná faktura, nebo uložená šablona (dodavatel, odběratel, platba, položky).";
+    } else if (hasInvoices) {
+      desc.textContent = "Vyber, jak chceš začít — prázdná faktura, nebo kopie z existující faktury.";
+    } else {
+      desc.textContent =
+        "Začni prázdnou fakturou. Šablonu nebo kopii faktury můžeš použít, až budeš mít co kopírovat.";
+    }
+  }
+
+  if (hasTemplate) {
+    templateBtn.focus();
+  } else {
+    emptyBtn.focus();
+  }
 }
 
-function openTemplateModal() {
-  updateTemplateExistingButton();
+async function openNewInvoiceModal() {
+  await updateNewInvoiceModalUi();
   document.getElementById("template-modal").classList.remove("hidden");
   document.body.classList.add("overflow-hidden");
-  document.getElementById("template-modal-use").focus();
 }
 
 function closeTemplateModal() {
@@ -697,7 +731,7 @@ function closeExistingInvoiceModal() {
 
 function backToTemplateModal() {
   closeExistingInvoiceModal();
-  openTemplateModal();
+  openNewInvoiceModal();
 }
 
 function confirmExistingInvoice() {
@@ -718,11 +752,7 @@ function bindExistingInvoicePreviewHover() {
 
 async function handleNewInvoice() {
   try {
-    if (await FakturaStorage.hasTemplate()) {
-      openTemplateModal();
-    } else {
-      navigateToNewInvoice("empty");
-    }
+    await openNewInvoiceModal();
   } catch (err) {
     showLoadError(err);
   }
