@@ -389,6 +389,7 @@ const PartySetupModal = (() => {
     close();
     showToastFn("Údaje dodavatele a odběratele doplněny.");
     if (typeof PaymentQr !== "undefined") PaymentQr.updatePaymentQr();
+    document.dispatchEvent(new CustomEvent("invoice-form-changed"));
   }
 
   function validateBeforeApply() {

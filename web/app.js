@@ -100,6 +100,7 @@ function confirmRemoveRow() {
   if (rowPendingRemoval) {
     rowPendingRemoval.remove();
     calculateGrandTotal();
+    updateSaveButtonState();
   }
   closeRemoveModal();
 }
@@ -153,6 +154,7 @@ function createItemRow(item) {
   formatRowNumericCells(row);
   bindRowEvents(row);
   calculateGrandTotal();
+  updateSaveButtonState();
 }
 
 function rebuildItemRows(items) {
@@ -727,6 +729,104 @@ async function validateInvoiceNumberOrToast() {
   return true;
 }
 
+let savedInvoiceSnapshot = null;
+let suppressBeforeUnload = false;
+
+function invoiceFormSnapshot() {
+  const data = InvoiceModel.collectFromForm();
+  const root = document.getElementById("invoice-root");
+  return JSON.stringify({
+    invoiceNumber: data.invoiceNumber,
+    supplier: data.supplier,
+    customer: data.customer,
+    dates: data.dates,
+    payment: data.payment,
+    variableSymbolManual: data.variableSymbolManual,
+    pdfIncludeQr: data.pdfIncludeQr,
+    items: data.items,
+    resolved: root?.dataset.resolved === "1",
+  });
+}
+
+function markInvoiceSaved() {
+  savedInvoiceSnapshot = invoiceFormSnapshot();
+  updateSaveButtonState();
+}
+
+function isInvoiceDirty() {
+  if (savedInvoiceSnapshot === null) return false;
+  return invoiceFormSnapshot() !== savedInvoiceSnapshot;
+}
+
+function updateSaveButtonState() {
+  const btn = document.getElementById("btn-save");
+  const hint = document.getElementById("save-unsaved-hint");
+  if (!btn) return;
+
+  const dirty = isInvoiceDirty();
+  const saving = btn.textContent === "Ukládám…";
+
+  if (!saving) {
+    btn.disabled = !dirty;
+    btn.setAttribute("aria-disabled", dirty ? "false" : "true");
+  }
+
+  if (hint) {
+    hint.classList.toggle("hidden", !dirty || saving);
+  }
+}
+
+function openUnsavedLeaveModal() {
+  document.getElementById("unsaved-leave-modal").classList.remove("hidden");
+  document.body.classList.add("overflow-hidden");
+  document.getElementById("unsaved-leave-modal-stay").focus();
+}
+
+function closeUnsavedLeaveModal() {
+  document.getElementById("unsaved-leave-modal").classList.add("hidden");
+  document.body.classList.remove("overflow-hidden");
+}
+
+function initUnsavedChangesUi() {
+  const backLink = document.getElementById("btn-back-list");
+  const root = document.getElementById("invoice-root");
+  const invoice = document.getElementById("invoice");
+
+  backLink?.addEventListener("click", (e) => {
+    if (!isInvoiceDirty()) return;
+    e.preventDefault();
+    openUnsavedLeaveModal();
+  });
+
+  root?.addEventListener("input", updateSaveButtonState);
+  root?.addEventListener("change", updateSaveButtonState);
+  invoice?.addEventListener("input", updateSaveButtonState);
+  invoice?.addEventListener("change", updateSaveButtonState);
+
+  document.getElementById("unsaved-leave-modal-stay")?.addEventListener("click", closeUnsavedLeaveModal);
+  document.getElementById("unsaved-leave-modal-leave")?.addEventListener("click", () => {
+    suppressBeforeUnload = true;
+    window.location.href = "index.html";
+  });
+  document.getElementById("unsaved-leave-modal-close")?.addEventListener("click", closeUnsavedLeaveModal);
+  document.getElementById("unsaved-leave-modal-backdrop")?.addEventListener("click", closeUnsavedLeaveModal);
+
+  document.addEventListener("keydown", (e) => {
+    const modal = document.getElementById("unsaved-leave-modal");
+    if (e.key === "Escape" && modal && !modal.classList.contains("hidden")) {
+      closeUnsavedLeaveModal();
+    }
+  });
+
+  window.addEventListener("beforeunload", (e) => {
+    if (suppressBeforeUnload || !isInvoiceDirty()) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
+
+  document.addEventListener("invoice-form-changed", updateSaveButtonState);
+}
+
 async function saveInvoice() {
   const btn = document.getElementById("btn-save");
 
@@ -748,13 +848,14 @@ async function saveInvoice() {
       const location = await FakturaStorage.getSaveLocationLabel();
       showToast(`Faktura uložena (${location})`);
       document.title = `Faktura ${saved.invoiceNumber || saved.id} – editor`;
+      markInvoiceSaved();
     })
     .catch((err) => {
       alert(err.message || "Uložení se nezdařilo.");
     })
     .finally(() => {
-      btn.disabled = false;
       btn.textContent = "Uložit fakturu";
+      updateSaveButtonState();
     });
 }
 
@@ -925,6 +1026,7 @@ async function init() {
     if (e.target.matches(".qty, .unit-price")) {
       calculateGrandTotal();
     }
+    updateSaveButtonState();
   });
 
   document.getElementById("btn-add-row").addEventListener("click", () => createItemRow());
@@ -935,10 +1037,12 @@ async function init() {
   document.getElementById("btn-save-template").addEventListener("click", saveTemplate);
   initRemoveModal();
   initTemplateSaveModal();
+  initUnsavedChangesUi();
   PartySetupModal.init(showToast);
   CustomerAres.init(showToast);
   PaymentQr.bindPaymentQrUpdates();
   await PaymentQr.updatePaymentQr();
+  markInvoiceSaved();
 
   if (isBlankInvoice && !autoPdf) {
     await PartySetupModal.maybeOpen(showToast);
@@ -965,10 +1069,12 @@ async function init() {
     if (!vs.dataset.manual) {
       vs.value = invoiceNumber.value.replace(/\D/g, "").slice(0, 10);
     }
+    updateSaveButtonState();
   });
 
   vs.addEventListener("input", () => {
     vs.dataset.manual = "1";
+    updateSaveButtonState();
   });
 }
 

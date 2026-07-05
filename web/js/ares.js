@@ -37,6 +37,7 @@ const PartyAres = (() => {
     if (fields.dic) {
       document.getElementById(fields.dic).value = data.dic || "";
     }
+    document.dispatchEvent(new CustomEvent("invoice-form-changed"));
   }
 
   async function lookup(ico) {

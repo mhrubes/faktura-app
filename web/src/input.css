@@ -511,13 +511,25 @@
         @apply pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-max max-w-[220px] -translate-x-1/2 rounded-md bg-neutral-800 px-2.5 py-1.5 text-center text-xs text-white shadow-lg;
     }
 
-    .btn-tooltip-wrap:has(button:disabled):hover .btn-tooltip {
+    .btn-tooltip-wrap:has(button:disabled):hover .btn-tooltip:not(.btn-tooltip-bottom) {
         @apply block;
     }
 
     .btn-tooltip-wrap .btn-tooltip::after {
         content: '';
         @apply absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-neutral-800;
+    }
+
+    .btn-tooltip-wrap .btn-tooltip-bottom {
+        @apply bottom-auto top-full mb-0 mt-2;
+    }
+
+    .btn-tooltip-wrap .btn-tooltip-bottom:not(.hidden) {
+        @apply block;
+    }
+
+    .btn-tooltip-wrap .btn-tooltip-bottom::after {
+        @apply bottom-full top-auto border-b-neutral-800 border-t-transparent;
     }
 }
 
