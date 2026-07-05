@@ -109,8 +109,12 @@ const InvoiceModel = (() => {
 
   function applyToForm(invoice, { rebuildRows } = {}) {
     const root = document.getElementById("invoice-root");
-    if (root && invoice.id) {
-      root.dataset.invoiceId = invoice.id;
+    if (root) {
+      if (invoice.id) {
+        root.dataset.invoiceId = invoice.id;
+      } else {
+        delete root.dataset.invoiceId;
+      }
     }
 
     setField("invoice-number", invoice.invoiceNumber);
@@ -174,6 +178,22 @@ const InvoiceModel = (() => {
     setField("customer-country", party.country);
     setField("customer-ico", party.ico);
     setField("customer-dic", party.dic);
+  }
+
+  function cloneFromInvoice(source) {
+    if (!source) return defaultEmptyInvoice();
+    return {
+      invoiceNumber: source.invoiceNumber || "",
+      supplier: { ...defaultEmptyInvoice().supplier, ...source.supplier },
+      customer: { ...defaultEmptyInvoice().customer, ...source.customer },
+      dates: { ...defaultEmptyInvoice().dates, ...source.dates },
+      payment: { ...defaultEmptyInvoice().payment, ...source.payment },
+      variableSymbolManual: Boolean(source.variableSymbolManual),
+      resolved: false,
+      items: (source.items?.length ? source.items : defaultEmptyInvoice().items).map((item) => ({
+        ...item,
+      })),
+    };
   }
 
   function applyTemplateToInvoice(invoice, template) {
@@ -252,6 +272,7 @@ const InvoiceModel = (() => {
     applyToForm,
     applyPartyToForm,
     applyTemplateToInvoice,
+    cloneFromInvoice,
     extractTemplateFromInvoice,
     calculateTotal,
     getSummary,

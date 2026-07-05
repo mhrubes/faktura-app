@@ -366,10 +366,27 @@ function restoreAfterPdf() {
   }
 }
 
-function downloadPdf() {
+function notifyPdfExportResult(ok, message) {
+  if (window.parent === window) return;
+  window.parent.postMessage(
+    {
+      type: "faktura-pdf-export",
+      ok,
+      message: message || "",
+      id: document.getElementById("invoice-root")?.dataset.invoiceId || "",
+    },
+    window.location.origin
+  );
+}
+
+function downloadPdf(options = {}) {
+  const { silent = false } = options;
   const btn = document.getElementById("btn-pdf");
-  btn.disabled = true;
-  btn.textContent = "Generuji PDF…";
+
+  if (!silent && btn) {
+    btn.disabled = true;
+    btn.textContent = "Generuji PDF…";
+  }
 
   window.scrollTo(0, 0);
   prepareForPdf();
@@ -377,7 +394,7 @@ function downloadPdf() {
   const invoice = document.getElementById("invoice");
   const number = document.getElementById("invoice-number").value.trim() || "faktura";
 
-  const options = {
+  const optionsPdf = {
     margin: [0, 0, 14, 0],
     filename: `faktura-${number.replace(/[/\\?%*:|"<>]/g, "-")}.pdf`,
     image: { type: "jpeg", quality: 0.98 },
@@ -392,25 +409,30 @@ function downloadPdf() {
     pagebreak: { mode: ["avoid-all", "css", "legacy"] },
   };
 
-  html2pdf()
-    .set(options)
+  return html2pdf()
+    .set(optionsPdf)
     .from(invoice)
     .toPdf()
     .get("pdf")
     .then((pdf) => {
       addPdfFooters(pdf);
-      pdf.save(options.filename);
+      pdf.save(optionsPdf.filename);
     })
     .then(() => {
       restoreAfterPdf();
-      btn.disabled = false;
-      btn.textContent = "Stáhnout PDF";
+      if (!silent && btn) {
+        btn.disabled = false;
+        btn.textContent = "Stáhnout PDF";
+      }
     })
-    .catch(() => {
+    .catch((err) => {
       restoreAfterPdf();
-      btn.disabled = false;
-      btn.textContent = "Stáhnout PDF";
-      alert("PDF se nepodařilo vygenerovat. Zkus obnovit stránku.");
+      if (!silent && btn) {
+        btn.disabled = false;
+        btn.textContent = "Stáhnout PDF";
+        alert("PDF se nepodařilo vygenerovat. Zkus obnovit stránku.");
+      }
+      throw err;
     });
 }
 
@@ -590,9 +612,24 @@ function initTemplateSaveModal() {
 async function loadInvoiceFromParams() {
   const params = new URLSearchParams(window.location.search);
   const id = params.get("id");
+  const copyFrom = params.get("copyFrom");
   const mode = params.get("mode");
 
   try {
+    if (copyFrom) {
+      const source = await FakturaStorage.getInvoice(copyFrom);
+      const invoice = InvoiceModel.cloneFromInvoice(source);
+      InvoiceModel.applyToForm(invoice, { rebuildRows: rebuildItemRows });
+      const root = document.getElementById("invoice-root");
+      if (root) {
+        delete root.dataset.invoiceId;
+        delete root.dataset.resolved;
+      }
+      const label = source.invoiceNumber || source.id;
+      document.title = label ? `Kopie faktury ${label} – nová faktura` : "Nová faktura (kopie)";
+      return;
+    }
+
     if (id) {
       const invoice = await FakturaStorage.getInvoice(id);
       InvoiceModel.applyToForm(invoice, { rebuildRows: rebuildItemRows });
@@ -618,7 +655,10 @@ async function loadInvoiceFromParams() {
 
 async function init() {
   const params = new URLSearchParams(window.location.search);
-  const isBlankInvoice = !params.get("id") && params.get("mode") !== "template";
+  const isBlankInvoice =
+    !params.get("id") && !params.get("copyFrom") && params.get("mode") !== "template";
+  const autoPdf = params.get("pdf") === "1";
+  const isCopy = Boolean(params.get("copyFrom"));
 
   await loadInvoiceFromParams();
 
@@ -629,7 +669,9 @@ async function init() {
   });
 
   document.getElementById("btn-add-row").addEventListener("click", () => createItemRow());
-  document.getElementById("btn-pdf").addEventListener("click", downloadPdf);
+  document.getElementById("btn-pdf").addEventListener("click", () => {
+    downloadPdf().catch(() => {});
+  });
   document.getElementById("btn-save").addEventListener("click", saveInvoice);
   document.getElementById("btn-save-template").addEventListener("click", saveTemplate);
   initRemoveModal();
@@ -637,9 +679,24 @@ async function init() {
   PartySetupModal.init(showToast);
   CustomerAres.init(showToast);
   PaymentQr.bindPaymentQrUpdates();
+  await PaymentQr.updatePaymentQr();
 
-  if (isBlankInvoice) {
+  if (isBlankInvoice && !autoPdf) {
     await PartySetupModal.maybeOpen(showToast);
+  }
+
+  if (isCopy) {
+    showToast("Kopie faktury — uprav údaje a ulož jako novou.");
+  }
+
+  if (autoPdf) {
+    try {
+      await downloadPdf({ silent: true });
+      notifyPdfExportResult(true);
+    } catch (err) {
+      notifyPdfExportResult(false, err?.message || "PDF se nepodařilo vygenerovat.");
+    }
+    return;
   }
 
   const vs = document.getElementById("variable-symbol");
