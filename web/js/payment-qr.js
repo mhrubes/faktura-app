@@ -79,7 +79,10 @@ const PaymentQr = (() => {
   }
 
   function parseAmount(value) {
-    const normalized = String(value || "").replace(/\s/g, "").replace(",", ".");
+    const normalized = String(value || "")
+      .replace(/\s*Kč\s*$/iu, "")
+      .replace(/\s/g, "")
+      .replace(",", ".");
     const amount = Number.parseFloat(normalized);
     return Number.isFinite(amount) && amount > 0 ? amount : 0;
   }

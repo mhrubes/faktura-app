@@ -5,6 +5,7 @@ const { loadEnvFiles, isPgEnabled } = require("./env-loader");
 const { createFileStorage } = require("./storage-file");
 const { createPgStorage } = require("./storage-pg");
 const { fetchAresByIco } = require("./ares-utils");
+const { getPdfExportStatus, renderHtmlToPdf, shutdownPdfBrowser } = require("./pdf-render");
 
 const DATA_VERSION = 1;
 
@@ -105,6 +106,26 @@ function createFakturaServer(options = {}) {
     }
 
     try {
+      if (parts[1] === "pdf" && parts.length === 3 && parts[2] === "status" && req.method === "GET") {
+        sendJson(res, 200, getPdfExportStatus());
+        return;
+      }
+
+      if (parts[1] === "pdf" && parts.length === 2 && req.method === "POST") {
+        const body = await parseBody(req);
+        const pdfBuffer = await renderHtmlToPdf({
+          html: body?.html || "",
+          footerLeft: body?.footerLeft || "",
+          title: body?.title || "Faktura",
+        });
+        res.writeHead(200, {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${String(body?.filename || "faktura.pdf").replace(/"/g, "")}"`,
+        });
+        res.end(pdfBuffer);
+        return;
+      }
+
       if (parts[1] === "status" && req.method === "GET") {
         sendJson(res, 200, storage.getStatus());
         return;
@@ -228,9 +249,11 @@ function createFakturaServer(options = {}) {
     stop() {
       return new Promise((resolve) => {
         const shutdownStorage = storage ? storage.shutdown() : Promise.resolve();
-        shutdownStorage.finally(() => {
-          server.close(() => resolve());
-        });
+        shutdownStorage
+          .finally(() => shutdownPdfBrowser())
+          .finally(() => {
+            server.close(() => resolve());
+          });
       });
     },
   };

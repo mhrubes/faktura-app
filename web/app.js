@@ -70,8 +70,8 @@ function calculateGrandTotal() {
     sum += calculateRowTotal(row);
   });
   const formatted = formatCurrency(sum);
-  document.getElementById("grand-total").textContent = formatted;
-  document.getElementById("payment-total").textContent = formatted;
+  document.getElementById("grand-total").textContent = `${formatted} Kč`;
+  document.getElementById("payment-total").textContent = `${formatted} Kč`;
   PaymentQr.updatePaymentQr();
   return sum;
 }
@@ -224,6 +224,7 @@ let pdfPrevDark = false;
 let pdfPrevColorScheme = "";
 let pdfColorOverrides = [];
 let pdfQrWasVisible = null;
+let pdfExportPromise = null;
 
 function forcePdfBarColors() {
   pdfColorOverrides = [];
@@ -366,37 +367,238 @@ function restoreAfterPdf() {
   }
 }
 
-function notifyPdfExportResult(ok, message) {
-  if (window.parent === window) return;
-  window.parent.postMessage(
-    {
-      type: "faktura-pdf-export",
-      ok,
-      message: message || "",
-      id: document.getElementById("invoice-root")?.dataset.invoiceId || "",
-    },
-    window.location.origin
-  );
+function getInputDisplayValue(originalInput) {
+  if (!originalInput) return "";
+  const value = originalInput.value;
+  if (originalInput.matches(".qty, .unit-price")) return formatAccountingValue(value);
+  if (originalInput.matches(".unit")) {
+    const val = value.trim();
+    if (/^\d+([.,]\d+)?$/.test(val)) {
+      const num = parseNumber(val);
+      return Number.isInteger(num) ? String(num) : formatAccountingValue(num);
+    }
+    return val;
+  }
+  if (originalInput.type === "date") return formatDateCs(value);
+  return value;
 }
 
-function downloadPdf(options = {}) {
-  const { silent = false } = options;
-  const btn = document.getElementById("btn-pdf");
+function replaceCloneFieldWithSpan(cloneField, originalField, className = "pdf-text-replacement") {
+  if (!cloneField || !originalField) return;
+  const span = document.createElement("span");
+  span.className = className;
+  span.textContent = getInputDisplayValue(originalField);
+  cloneField.replaceWith(span);
+}
 
-  if (!silent && btn) {
-    btn.disabled = true;
-    btn.textContent = "Generuji PDF…";
+function copySectionLabelHeights(fromRoot, toRoot) {
+  const fromLabels = fromRoot.querySelectorAll(".section-label");
+  const toLabels = toRoot.querySelectorAll(".section-label");
+  toLabels.forEach((label, index) => {
+    const sourceLabel = fromLabels[index];
+    const sourceSpan = sourceLabel?.querySelector("span");
+    if (!sourceSpan) return;
+    const rect = sourceSpan.getBoundingClientRect();
+    label.style.minHeight = `${Math.ceil(Math.max(rect.width, rect.height)) + 4}px`;
+  });
+}
+
+function applyPdfBarColorsToRoot(root) {
+  root.querySelectorAll(".payment-bar, .recap-bar").forEach((bar) => {
+    bar.style.backgroundColor = "#00b5c8";
+    bar.style.color = "#ffffff";
+    bar.querySelectorAll("*").forEach((child) => {
+      child.style.color = "#ffffff";
+    });
+  });
+}
+
+function prepareInvoiceCloneForPdf(invoiceEl) {
+  const clone = invoiceEl.cloneNode(true);
+  const originalCanvases = invoiceEl.querySelectorAll("canvas");
+  const clonedCanvases = clone.querySelectorAll("canvas");
+
+  clonedCanvases.forEach((canvas, index) => {
+    const source = originalCanvases[index];
+    if (!source) {
+      canvas.remove();
+      return;
+    }
+
+    try {
+      const img = document.createElement("img");
+      img.src = source.toDataURL("image/png");
+      img.width = source.width;
+      img.height = source.height;
+      img.className = canvas.className;
+      if (canvas.getAttribute("style")) img.setAttribute("style", canvas.getAttribute("style"));
+      img.alt = canvas.getAttribute("aria-label") || "QR platba";
+      canvas.replaceWith(img);
+    } catch {
+      canvas.remove();
+    }
+  });
+
+  copySectionLabelHeights(invoiceEl, clone);
+
+  clone.querySelectorAll("input[type='date']").forEach((input) => {
+    const orig = input.id ? document.getElementById(input.id) : null;
+    replaceCloneFieldWithSpan(input, orig, "pdf-date-replacement");
+  });
+
+  clone.querySelectorAll(".payment-line input, .payment-select").forEach((el) => {
+    const orig = el.id ? document.getElementById(el.id) : null;
+    if (el.tagName === "SELECT") {
+      replaceCloneFieldWithSpan(el, orig);
+      return;
+    }
+    if (orig && orig.offsetParent !== null) {
+      replaceCloneFieldWithSpan(el, orig);
+    }
+  });
+
+  const origRows = invoiceEl.querySelectorAll(".item-row");
+  clone.querySelectorAll(".item-row").forEach((row, rowIndex) => {
+    const origRow = origRows[rowIndex];
+    if (!origRow) return;
+    row.querySelectorAll(".qty, .desc, .unit-price, .unit").forEach((input) => {
+      const fieldClass = ["qty", "desc", "unit-price", "unit"].find((name) => input.classList.contains(name));
+      if (!fieldClass) return;
+      replaceCloneFieldWithSpan(input, origRow.querySelector(`.${fieldClass}`));
+    });
+  });
+
+  clone.querySelectorAll("input[type='text'], input[type='email'], input[type='number']").forEach((input) => {
+    const orig = input.id ? document.getElementById(input.id) : null;
+    if (!orig) return;
+    input.setAttribute("value", getInputDisplayValue(orig));
+  });
+
+  applyPdfBarColorsToRoot(clone);
+
+  ["payment-total", "grand-total"].forEach((id) => {
+    const orig = document.getElementById(id);
+    const cloneEl = clone.querySelector(`#${id}`);
+    if (orig && cloneEl) cloneEl.textContent = orig.textContent;
+  });
+
+  const includeQrInPdf =
+    PaymentQr.shouldShowQr() && document.getElementById("pdf-include-qr")?.checked !== false;
+  const qrWrap = clone.querySelector("#payment-qr-wrap");
+  const origQrWrap = invoiceEl.querySelector("#payment-qr-wrap");
+  if (qrWrap && origQrWrap) {
+    if (includeQrInPdf && !origQrWrap.classList.contains("hidden")) {
+      qrWrap.classList.remove("hidden");
+    } else if (!includeQrInPdf) {
+      qrWrap.classList.add("hidden");
+    }
   }
 
-  window.scrollTo(0, 0);
-  prepareForPdf();
+  return clone;
+}
 
-  const invoice = document.getElementById("invoice");
-  const number = document.getElementById("invoice-number").value.trim() || "faktura";
+function buildPdfFooterLeftText() {
+  const printedBy = document.getElementById("supplier-name")?.value.trim() || "";
+  const printDate = formatPrintDate();
+  return printedBy ? `Vytiskl(a): ${printedBy}, ${printDate}` : `Vytiskl(a): , ${printDate}`;
+}
 
+let cachedTailwindCssPromise = null;
+
+function getTailwindCssText() {
+  if (!cachedTailwindCssPromise) {
+    cachedTailwindCssPromise = fetch(`${window.location.origin}/css/tailwind.css`).then((response) => {
+      if (!response.ok) throw new Error("Nepodařilo se načíst styly pro PDF.");
+      return response.text();
+    });
+  }
+  return cachedTailwindCssPromise;
+}
+
+function escapePdfHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+async function buildInvoicePdfHtml(invoiceEl) {
+  const cssText = await getTailwindCssText();
+  const clone = prepareInvoiceCloneForPdf(invoiceEl);
+  const number = document.getElementById("invoice-number")?.value.trim() || "faktura";
+  const documentTitle = `Faktura ${number}`;
+  return `<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <title>${escapePdfHtml(documentTitle)}</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    }
+    ${cssText}
+  </style>
+</head>
+<body class="pdf-exporting">
+${clone.outerHTML}
+</body>
+</html>`;
+}
+
+async function downloadPdfBlob(filename, blob) {
+  const buffer = await blob.arrayBuffer();
+  const downloadBlob = new Blob([buffer], { type: "application/octet-stream" });
+  const url = URL.createObjectURL(downloadBlob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.style.cssText = "position:fixed;left:-9999px;top:-9999px;visibility:hidden;";
+  document.body.appendChild(link);
+  link.click();
+
+  window.setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 2000);
+}
+
+async function downloadPdfViaServer(invoiceEl, filename, documentTitle) {
+  const response = await fetch("/api/pdf", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      html: await buildInvoicePdfHtml(invoiceEl),
+      footerLeft: buildPdfFooterLeftText(),
+      filename,
+      title: documentTitle,
+    }),
+  });
+
+  if (!response.ok) {
+    let message = "PDF se nepodařilo vygenerovat.";
+    try {
+      const data = await response.json();
+      if (data?.error) message = data.error;
+    } catch {
+      // ignore parse errors
+    }
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  await downloadPdfBlob(filename, blob);
+}
+
+function downloadPdfViaCanvas(invoiceEl, filename, documentTitle) {
   const optionsPdf = {
     margin: [0, 0, 14, 0],
-    filename: `faktura-${number.replace(/[/\\?%*:|"<>]/g, "-")}.pdf`,
+    filename,
     image: { type: "jpeg", quality: 0.98 },
     html2canvas: {
       scale: 2,
@@ -411,28 +613,85 @@ function downloadPdf(options = {}) {
 
   return html2pdf()
     .set(optionsPdf)
-    .from(invoice)
+    .from(invoiceEl)
     .toPdf()
     .get("pdf")
-    .then((pdf) => {
+    .then(async (pdf) => {
       addPdfFooters(pdf);
-      pdf.save(optionsPdf.filename);
-    })
-    .then(() => {
-      restoreAfterPdf();
-      if (!silent && btn) {
-        btn.disabled = false;
-        btn.textContent = "Stáhnout PDF";
+      if (documentTitle && typeof pdf.setProperties === "function") {
+        pdf.setProperties({ title: documentTitle });
       }
-    })
-    .catch((err) => {
-      restoreAfterPdf();
-      if (!silent && btn) {
-        btn.disabled = false;
-        btn.textContent = "Stáhnout PDF";
-        alert("PDF se nepodařilo vygenerovat. Zkus obnovit stránku.");
-      }
-      throw err;
+      const blob = pdf.output("blob");
+      await downloadPdfBlob(filename, blob);
+    });
+}
+
+function notifyPdfExportResult(ok, message) {
+  if (window.parent === window) return;
+  window.parent.postMessage(
+    {
+      type: "faktura-pdf-export",
+      ok,
+      message: message || "",
+      id: document.getElementById("invoice-root")?.dataset.invoiceId || "",
+    },
+    window.location.origin
+  );
+}
+
+function downloadPdf(options = {}) {
+  if (pdfExportPromise) return pdfExportPromise;
+
+  pdfExportPromise = runDownloadPdf(options).finally(() => {
+    pdfExportPromise = null;
+  });
+
+  return pdfExportPromise;
+}
+
+function runDownloadPdf(options = {}) {
+  const { silent = false } = options;
+  const btn = document.getElementById("btn-pdf");
+
+  if (!silent && btn) {
+    btn.disabled = true;
+    btn.textContent = "Generuji PDF…";
+  }
+
+  const invoice = document.getElementById("invoice");
+  const number = document.getElementById("invoice-number").value.trim() || "faktura";
+  const filename = `faktura-${number.replace(/[/\\?%*:|"<>]/g, "-")}.pdf`;
+  const documentTitle = `Faktura ${number}`;
+
+  const finishOk = () => {
+    restoreAfterPdf();
+    if (!silent && btn) {
+      btn.disabled = false;
+      btn.textContent = "Stáhnout PDF";
+    }
+  };
+
+  const finishErr = (err, usedFallback = false) => {
+    restoreAfterPdf();
+    if (!silent && btn) {
+      btn.disabled = false;
+      btn.textContent = "Stáhnout PDF";
+      const message = usedFallback
+        ? "PDF se nepodařilo vygenerovat. Zkus obnovit stránku."
+        : err?.message || "PDF se nepodařilo vygenerovat. Zkus obnovit stránku.";
+      alert(message);
+    }
+    throw err;
+  };
+
+  return downloadPdfViaServer(invoice, filename, documentTitle)
+    .then(finishOk)
+    .catch((serverErr) => {
+      window.scrollTo(0, 0);
+      prepareForPdf();
+      return downloadPdfViaCanvas(invoice, filename, documentTitle)
+        .then(finishOk)
+        .catch((canvasErr) => finishErr(canvasErr || serverErr, true));
     });
 }
 
