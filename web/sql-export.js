@@ -61,6 +61,7 @@ const INVOICE_UPDATE_SET = `
   invoice_number = EXCLUDED.invoice_number,
   resolved = EXCLUDED.resolved,
   variable_symbol_manual = EXCLUDED.variable_symbol_manual,
+  pdf_include_qr = EXCLUDED.pdf_include_qr,
   data_version = EXCLUDED.data_version,
   supplier_name = EXCLUDED.supplier_name,
   supplier_address = EXCLUDED.supplier_address,
@@ -100,7 +101,7 @@ function invoiceToSqlStatements(invoice, dataVersion = 1) {
   lines.push(`-- Faktura: ${invoice.invoiceNumber || id}`);
   lines.push(
     `INSERT INTO invoices (
-  id, invoice_number, resolved, variable_symbol_manual, data_version,
+  id, invoice_number, resolved, variable_symbol_manual, pdf_include_qr, data_version,
   supplier_name, supplier_address, supplier_city, supplier_country, supplier_ico, supplier_email, supplier_phone,
   customer_name, customer_address, customer_city, customer_country, customer_ico, customer_dic,
   issue_date, due_date, order_number,
@@ -111,6 +112,7 @@ function invoiceToSqlStatements(invoice, dataVersion = 1) {
   ${sqlLiteral(invoice.invoiceNumber || "")},
   ${sqlLiteral(Boolean(invoice.resolved))},
   ${sqlLiteral(Boolean(invoice.variableSymbolManual))},
+  ${sqlLiteral(Boolean(invoice.pdfIncludeQr))},
   ${dataVersion},
   ${sqlLiteral(supplier.name || "")},
   ${sqlLiteral(supplier.address || "")},

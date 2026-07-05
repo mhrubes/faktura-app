@@ -11,6 +11,7 @@ function rowToInvoice(row, items) {
     invoiceNumber: row.invoice_number,
     resolved: row.resolved,
     variableSymbolManual: row.variable_symbol_manual,
+    pdfIncludeQr: row.pdf_include_qr,
     version: row.data_version,
     supplier: {
       name: row.supplier_name || "",
@@ -207,24 +208,25 @@ function createPgStorage({ dataVersion }) {
 
       await client.query(
         `INSERT INTO invoices (
-          id, invoice_number, resolved, variable_symbol_manual, data_version,
+          id, invoice_number, resolved, variable_symbol_manual, pdf_include_qr, data_version,
           supplier_name, supplier_address, supplier_city, supplier_country, supplier_ico, supplier_email, supplier_phone,
           customer_name, customer_address, customer_city, customer_country, customer_ico, customer_dic,
           issue_date, due_date, order_number,
           payment_account_number, payment_iban, payment_swift, payment_variable_symbol, payment_constant_symbol, payment_method,
           created_at, saved_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5,
-          $6, $7, $8, $9, $10, $11, $12,
-          $13, $14, $15, $16, $17, $18,
-          $19, $20, $21,
-          $22, $23, $24, $25, $26, $27,
-          $28, $29, $30
+          $1, $2, $3, $4, $5, $6,
+          $7, $8, $9, $10, $11, $12, $13,
+          $14, $15, $16, $17, $18, $19,
+          $20, $21, $22,
+          $23, $24, $25, $26, $27, $28,
+          $29, $30, $31
         )
         ON CONFLICT (id) DO UPDATE SET
           invoice_number = EXCLUDED.invoice_number,
           resolved = EXCLUDED.resolved,
           variable_symbol_manual = EXCLUDED.variable_symbol_manual,
+          pdf_include_qr = EXCLUDED.pdf_include_qr,
           data_version = EXCLUDED.data_version,
           supplier_name = EXCLUDED.supplier_name,
           supplier_address = EXCLUDED.supplier_address,
@@ -255,6 +257,7 @@ function createPgStorage({ dataVersion }) {
           invoice.invoiceNumber || "",
           Boolean(invoice.resolved),
           Boolean(invoice.variableSymbolManual),
+          Boolean(invoice.pdfIncludeQr),
           dataVersion,
           supplier.name || "",
           supplier.address || "",

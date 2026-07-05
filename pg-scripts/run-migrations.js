@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Spustí všechny SQL soubory v pg-scripts/ ve formátu N_nazev.sql v jedné transakci.
+ * Spustí SQL migrace ve verzovaných složkách pg-scripts/X.Y/ (N_nazev.sql) v jedné transakci.
  *
  * Použití:
  *   cd pg-scripts
@@ -11,100 +11,138 @@
  *   npm run migrate
  */
 
-const fs = require('fs')
-const path = require('path')
-const { Client } = require('pg')
+const fs = require("fs");
+const path = require("path");
+const { Client } = require("pg");
 
-const SCRIPTS_DIR = __dirname
+const SCRIPTS_DIR = __dirname;
+const VERSION_DIR_PATTERN = /^\d+\.\d+$/;
 
 function loadEnvFile() {
-    const candidates = [path.join(SCRIPTS_DIR, '.env'), path.join(SCRIPTS_DIR, '..', '.env')]
+  const candidates = [path.join(SCRIPTS_DIR, ".env"), path.join(SCRIPTS_DIR, "..", ".env")];
 
-    for (const envPath of candidates) {
-        if (!fs.existsSync(envPath)) continue
-        const content = fs.readFileSync(envPath, 'utf8')
-        for (const line of content.split(/\r?\n/)) {
-            const trimmed = line.trim()
-            if (!trimmed || trimmed.startsWith('#')) continue
-            const eq = trimmed.indexOf('=')
-            if (eq === -1) continue
-            const key = trimmed.slice(0, eq).trim()
-            let value = trimmed.slice(eq + 1).trim()
-            if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-                value = value.slice(1, -1)
-            }
-            if (process.env[key] === undefined) {
-                process.env[key] = value
-            }
-        }
+  for (const envPath of candidates) {
+    if (!fs.existsSync(envPath)) continue;
+    const content = fs.readFileSync(envPath, "utf8");
+    for (const line of content.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq === -1) continue;
+      const key = trimmed.slice(0, eq).trim();
+      let value = trimmed.slice(eq + 1).trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      if (process.env[key] === undefined) {
+        process.env[key] = value;
+      }
     }
+  }
 }
 
 function getClientConfig() {
-    if (process.env.DATABASE_URL) {
-        return { connectionString: process.env.DATABASE_URL }
-    }
+  if (process.env.DATABASE_URL) {
+    return { connectionString: process.env.DATABASE_URL };
+  }
 
-    const required = ['PG_HOST', 'PG_DATABASE', 'PG_USER', 'PG_PASSWORD']
-    const missing = required.filter((key) => !process.env[key])
-    if (missing.length) {
-        throw new Error(`Chybí proměnné prostředí: ${missing.join(', ')}. Zkopíruj .env.example → .env nebo nastav DATABASE_URL.`)
-    }
+  const required = ["PG_HOST", "PG_DATABASE", "PG_USER", "PG_PASSWORD"];
+  const missing = required.filter((key) => !process.env[key]);
+  if (missing.length) {
+    throw new Error(
+      `Chybí proměnné prostředí: ${missing.join(", ")}. Zkopíruj .env.example → .env nebo nastav DATABASE_URL.`
+    );
+  }
 
-    return {
-        host: process.env.PG_HOST,
-        port: Number(process.env.PG_PORT || 5432),
-        database: process.env.PG_DATABASE,
-        user: process.env.PG_USER,
-        password: process.env.PG_PASSWORD
-    }
+  return {
+    host: process.env.PG_HOST,
+    port: Number(process.env.PG_PORT || 5432),
+    database: process.env.PG_DATABASE,
+    user: process.env.PG_USER,
+    password: process.env.PG_PASSWORD,
+  };
 }
 
-function listSqlFiles() {
-    return fs
-        .readdirSync(SCRIPTS_DIR)
-        .filter((name) => /^\d+_.+\.sql$/i.test(name))
-        .sort((a, b) => {
-            const numA = parseInt(a.split('_')[0], 10)
-            const numB = parseInt(b.split('_')[0], 10)
-            return numA - numB || a.localeCompare(b)
-        })
+function compareVersionNames(a, b) {
+  const [aMajor, aMinor] = a.split(".").map(Number);
+  const [bMajor, bMinor] = b.split(".").map(Number);
+  return aMajor - bMajor || aMinor - bMinor;
+}
+
+function listVersionDirs() {
+  return fs
+    .readdirSync(SCRIPTS_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && VERSION_DIR_PATTERN.test(entry.name))
+    .map((entry) => entry.name)
+    .sort(compareVersionNames);
+}
+
+function listSqlFiles(versionDir) {
+  return fs
+    .readdirSync(versionDir)
+    .filter((name) => /^\d+_.+\.sql$/i.test(name))
+    .sort((a, b) => {
+      const numA = parseInt(a.split("_")[0], 10);
+      const numB = parseInt(b.split("_")[0], 10);
+      return numA - numB || a.localeCompare(b);
+    });
+}
+
+function listMigrationScripts() {
+  const scripts = [];
+
+  for (const version of listVersionDirs()) {
+    const versionDir = path.join(SCRIPTS_DIR, version);
+    for (const file of listSqlFiles(versionDir)) {
+      scripts.push({
+        version,
+        file,
+        relativePath: path.join(version, file),
+        absolutePath: path.join(versionDir, file),
+      });
+    }
+  }
+
+  return scripts;
 }
 
 async function run() {
-    loadEnvFile()
-    const files = listSqlFiles()
+  loadEnvFile();
+  const scripts = listMigrationScripts();
 
-    if (!files.length) {
-        console.error('Žádné SQL soubory (N_nazev.sql) v pg-scripts/.')
-        process.exit(1)
+  if (!scripts.length) {
+    console.error("Žádné SQL soubory (X.Y/N_nazev.sql) v pg-scripts/.");
+    process.exit(1);
+  }
+
+  const client = new Client(getClientConfig());
+  await client.connect();
+
+  console.log(`Připojeno k ${process.env.PG_DATABASE || "databázi"}.`);
+  console.log(`Spouštím ${scripts.length} skript(ů) v transakci…\n`);
+
+  try {
+    await client.query("BEGIN");
+
+    for (const script of scripts) {
+      const sql = fs.readFileSync(script.absolutePath, "utf8");
+      console.log(`→ ${script.relativePath.replace(/\\/g, "/")}`);
+      await client.query(sql);
     }
 
-    const client = new Client(getClientConfig())
-    await client.connect()
-
-    console.log(`Připojeno k ${process.env.PG_DATABASE || 'databázi'}.`)
-    console.log(`Spouštím ${files.length} skript(ů) v transakci…\n`)
-
-    try {
-        await client.query('BEGIN')
-
-        for (const file of files) {
-            const sql = fs.readFileSync(path.join(SCRIPTS_DIR, file), 'utf8')
-            console.log(`→ ${file}`)
-            await client.query(sql)
-        }
-
-        await client.query('COMMIT')
-        console.log('\nHotovo — COMMIT proběhl, schéma je vytvořené.')
-    } catch (err) {
-        await client.query('ROLLBACK')
-        console.error('\nChyba — ROLLBACK, žádná změna nezůstala.')
-        console.error(err.message || err)
-        process.exitCode = 1
-    } finally {
-        await client.end()
-    }
+    await client.query("COMMIT");
+    console.log("\nHotovo — COMMIT proběhl, schéma je vytvořené.");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("\nChyba — ROLLBACK, žádná změna nezůstala.");
+    console.error(err.message || err);
+    process.exitCode = 1;
+  } finally {
+    await client.end();
+  }
 }
 
-run()
+run();

@@ -299,7 +299,7 @@ function prepareForPdf() {
   forcePdfBarColors();
 
   const includeQrInPdf =
-    PaymentQr.shouldShowQr() && document.getElementById("pdf-include-qr")?.checked !== false;
+    PaymentQr.shouldShowQr() && document.getElementById("pdf-include-qr")?.checked === true;
   const qrWrap = document.getElementById("payment-qr-wrap");
   if (qrWrap && !includeQrInPdf) {
     pdfQrWasVisible = !qrWrap.classList.contains("hidden");
@@ -483,7 +483,7 @@ function prepareInvoiceCloneForPdf(invoiceEl) {
   });
 
   const includeQrInPdf =
-    PaymentQr.shouldShowQr() && document.getElementById("pdf-include-qr")?.checked !== false;
+    PaymentQr.shouldShowQr() && document.getElementById("pdf-include-qr")?.checked === true;
   const qrWrap = clone.querySelector("#payment-qr-wrap");
   const origQrWrap = invoiceEl.querySelector("#payment-qr-wrap");
   if (qrWrap && origQrWrap) {

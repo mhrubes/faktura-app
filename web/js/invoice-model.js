@@ -50,6 +50,7 @@ const InvoiceModel = (() => {
         method: "Převodem",
       },
       variableSymbolManual: false,
+      pdfIncludeQr: false,
       resolved: false,
       items: [{ desc: "", qty: "1,00", unit: "ks", unitPrice: "0,00" }],
     };
@@ -98,6 +99,7 @@ const InvoiceModel = (() => {
         method: document.getElementById("payment-method")?.value || "Převodem",
       },
       variableSymbolManual: Boolean(vs?.dataset.manual),
+      pdfIncludeQr: Boolean(document.getElementById("pdf-include-qr")?.checked),
       items,
     };
   }
@@ -155,6 +157,9 @@ const InvoiceModel = (() => {
       }
     }
 
+    const pdfIncludeQr = document.getElementById("pdf-include-qr");
+    if (pdfIncludeQr) pdfIncludeQr.checked = Boolean(invoice.pdfIncludeQr);
+
     if (rebuildRows && invoice.items?.length) {
       rebuildRows(invoice.items);
     }
@@ -189,6 +194,7 @@ const InvoiceModel = (() => {
       dates: { ...defaultEmptyInvoice().dates, ...source.dates },
       payment: { ...defaultEmptyInvoice().payment, ...source.payment },
       variableSymbolManual: Boolean(source.variableSymbolManual),
+      pdfIncludeQr: Boolean(source.pdfIncludeQr),
       resolved: false,
       items: (source.items?.length ? source.items : defaultEmptyInvoice().items).map((item) => ({
         ...item,
