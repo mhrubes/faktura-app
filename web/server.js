@@ -7,6 +7,8 @@ const { createPgStorage } = require("./storage-pg");
 const { fetchAresByIco } = require("./ares-utils");
 const { getPdfExportStatus, renderHtmlToPdf, shutdownPdfBrowser } = require("./pdf-render");
 
+const { version: APP_VERSION = "0.0.0" } = require("./package.json");
+
 const DATA_VERSION = 1;
 
 const MIME_TYPES = {
@@ -127,7 +129,7 @@ function createFakturaServer(options = {}) {
       }
 
       if (parts[1] === "status" && req.method === "GET") {
-        sendJson(res, 200, storage.getStatus());
+        sendJson(res, 200, { ...storage.getStatus(), version: APP_VERSION });
         return;
       }
 

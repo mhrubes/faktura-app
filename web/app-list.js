@@ -24,7 +24,15 @@ async function updateStorageHint() {
   } else {
     el.innerHTML = 'Faktury se ukládají do složky <code class="text-xs">data/invoices/</code>';
   }
+  updateAppVersion(status);
   await updateExportImportUi(status);
+}
+
+function updateAppVersion(status) {
+  const el = document.getElementById("app-version");
+  if (!el || !status?.version) return;
+  el.textContent = `verze: ${status.version}`;
+  el.hidden = false;
 }
 
 async function updateExportImportUi(status) {
