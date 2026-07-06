@@ -81,7 +81,16 @@ PG_PASSWORD=heslo
 
 3. Spusť server — data se ukládají do tabulek místo JSON souborů.
 
-Skripty schématu jsou ve složce [`pg-scripts/`](pg-scripts/) (`1_tables.sql`, `2_indexes.sql`, `3_triggers.sql`).
+Migrace jsou ve složce [`pg-scripts/`](pg-scripts/) a jsou **verzované po složkách**:
+
+```text
+pg-scripts/
+├── 1.0/   # základní schéma tabulek, indexů a triggerů
+├── 1.1/   # rozšíření (např. pdf_include_qr)
+└── run-migrations.js
+```
+
+Skript `npm run db:migrate` projde verze postupně a aplikuje SQL soubory ve správném pořadí.
 
 Import/export `.json` funguje v obou režimech.
 
@@ -156,16 +165,21 @@ Výstup: `desktop/dist/Faktura-1.0.0-portable.exe`
 ### Editor faktury
 
 - Dodavatel, odběratel, datumy, platební údaje a položky
+- Úvodní modal pro rychlé doplnění dodavatele / odběratele z existujících faktur nebo z ARES
 - Automatický výpočet řádků a celkové částky
 - Variabilní symbol se doplňuje z čísla faktury (lze přepsat ručně)
 - Validace — povinné číslo faktury, kontrola duplicity
+- Ochrana před ztrátou práce — při neuložených změnách se při odchodu zpět na seznam zobrazí potvrzovací modal
+- Tlačítko **Uložit fakturu** je aktivní jen při změnách; jinak je disabled s tooltipem
 - **Šablona** — uložení s potvrzením (včetně varování při přepsání existující)
-- **Export do PDF** včetně patičky se jménem a číslem stránky
+- **Export do PDF** přes serverové renderování v Chromium/Puppeteer, takže text v PDF zůstává označitelný a kopírovatelný
+- PDF obsahuje název dokumentu, patičku se jménem a číslem stránky a volitelně i QR platbu
 
 ### QR platba
 
 - U způsobu platby **Převodem** — QR kód ve formátu SPAYD pod rekapitulací
 - Přepínač u **Stáhnout PDF** — volba, zda QR zahrnout do PDF
+- Volba zahrnutí QR se ukládá spolu s fakturou v JSON i PostgreSQL
 
 ---
 
