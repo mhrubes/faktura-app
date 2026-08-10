@@ -43,7 +43,7 @@ const PartyAres = (() => {
   async function lookup(ico) {
     const cleaned = String(ico || "").replace(/\D/g, "");
     if (cleaned.length !== 8) {
-      throw new Error("Zadej platné IČ (8 číslic).");
+      throw new Error("Zadej platné IČO (8 číslic).");
     }
 
     const response = await fetch(`/api/ares/${encodeURIComponent(cleaned)}`);
@@ -96,6 +96,3 @@ const PartyAres = (() => {
 
   return { init, lookup, applyToForm };
 })();
-
-// zpětná kompatibilita
-const CustomerAres = PartyAres;

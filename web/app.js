@@ -1,3 +1,11 @@
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function formatCurrency(value) {
   return Number(value).toLocaleString("cs-CZ", {
     minimumFractionDigits: 2,
@@ -40,9 +48,7 @@ function formatRowNumericCells(row) {
 }
 
 function formatDateCs(isoDate) {
-  if (!isoDate) return "";
-  const [y, m, d] = isoDate.split("-");
-  return `${d}.${m}.${y}`;
+  return InvoiceModel.formatDateCs(isoDate, "");
 }
 
 function showToast(message, type = "success") {
@@ -83,8 +89,8 @@ function openRemoveModal(row) {
   const desc = row.querySelector(".desc")?.value.trim();
   const textEl = document.getElementById("remove-modal-text");
   textEl.textContent = desc
-    ? `Opravdu chcete odebrat položku „${desc}"?`
-    : "Opravdu chcete odebrat tuto položku z faktury?";
+    ? `Opravdu chceš odebrat položku „${desc}"?`
+    : "Opravdu chceš odebrat tuto položku z faktury?";
   document.getElementById("remove-modal").classList.remove("hidden");
   document.body.classList.add("overflow-hidden");
   document.getElementById("remove-modal-confirm").focus();
@@ -873,7 +879,7 @@ function buildTemplateInfoItems(template) {
   const items = [];
   if (template.sourceInvoiceNumber) items.push(`Z faktury č.: ${template.sourceInvoiceNumber}`);
   if (template.supplier?.name) items.push(`Dodavatel: ${template.supplier.name}`);
-  if (template.supplier?.ico) items.push(`IČ: ${template.supplier.ico}`);
+  if (template.supplier?.ico) items.push(`IČO: ${template.supplier.ico}`);
   if (template.customer?.name) items.push(`Odběratel: ${template.customer.name}`);
   items.push(`Počet položek: ${template.items?.length || 0}`);
   if (template.savedAt) {
@@ -899,7 +905,7 @@ function openTemplateSaveModal(existing) {
       "Šablona už existuje. Chceš ji přepsat údaji z této faktury (dodavatel, odběratel, platba, položky)?";
     confirmBtn.textContent = "Přepsat";
     existingInfo.innerHTML = buildTemplateInfoItems(existing)
-      .map((line) => `<li>${line.replace(/</g, "&lt;")}</li>`)
+      .map((line) => `<li>${escapeHtml(line)}</li>`)
       .join("");
     existingBox.classList.remove("hidden");
   } else {
@@ -1039,7 +1045,7 @@ async function init() {
   initTemplateSaveModal();
   initUnsavedChangesUi();
   PartySetupModal.init(showToast);
-  CustomerAres.init(showToast);
+  PartyAres.init(showToast);
   PaymentQr.bindPaymentQrUpdates();
   await PaymentQr.updatePaymentQr();
   markInvoiceSaved();

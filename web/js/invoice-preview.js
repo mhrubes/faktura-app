@@ -56,8 +56,7 @@ const InvoicePreview = (() => {
 
   function formatDate(iso) {
     if (typeof InvoiceModel !== "undefined" && InvoiceModel.formatDateCs) {
-      const formatted = InvoiceModel.formatDateCs(iso);
-      return formatted === "—" ? "" : formatted;
+      return InvoiceModel.formatDateCs(iso, "");
     }
     if (!iso) return "";
     const [y, m, d] = iso.split("-");
@@ -116,7 +115,7 @@ const InvoicePreview = (() => {
                 ${line(supplier.city)}
                 ${line(supplier.country || "Česká republika")}
                 <div class="party-ids">
-                  <span>IČ:</span>
+                  <span>IČO:</span>
                   <span class="inline-short">${esc(supplier.ico || "")}</span>
                 </div>
               </div>
@@ -142,7 +141,7 @@ const InvoicePreview = (() => {
                 ${line(customer.city)}
                 ${line(customer.country || "Česká republika")}
                 <div class="party-ids">
-                  <span>IČ:</span>
+                  <span>IČO:</span>
                   <span class="inline-short">${esc(customer.ico || "")}</span>
                   <span class="ml-2">DIČ:</span>
                   <span class="inline-short">${esc(customer.dic || "")}</span>

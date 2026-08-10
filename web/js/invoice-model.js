@@ -241,8 +241,8 @@ const InvoiceModel = (() => {
     );
   }
 
-  function formatDateCs(isoDate) {
-    if (!isoDate) return "—";
+  function formatDateCs(isoDate, emptyValue = "—") {
+    if (!isoDate) return emptyValue;
     const [y, m, d] = isoDate.split("-");
     return `${d}.${m}.${y}`;
   }
