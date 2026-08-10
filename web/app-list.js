@@ -15,6 +15,18 @@ function openInvoiceCopy(id) {
   window.location.href = `invoice.html?copyFrom=${encodeURIComponent(id)}`;
 }
 
+async function saveInvoiceAsTemplate(id) {
+  try {
+    const invoice = await FakturaStorage.getInvoice(id);
+    const template = InvoiceModel.extractTemplateFromInvoice(invoice);
+    await FakturaStorage.saveTemplate(template);
+    await renderInvoiceList();
+    showToast(`Faktura č. ${invoice.invoiceNumber || invoice.id} uložena jako šablona.`);
+  } catch (err) {
+    alert(err.message || "Uložení šablony se nezdařilo.");
+  }
+}
+
 async function updateStorageHint() {
   const el = document.getElementById("storage-hint");
   if (!el) return;
@@ -537,7 +549,7 @@ function renderInvoiceRows() {
               <a href="invoice.html?id=${encodeURIComponent(summary.id)}" class="btn-icon" title="Otevřít" aria-label="Otevřít fakturu">
                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.379-8.379-2.828-2.828z"/></svg>
               </a>
-              <button type="button" class="btn-icon btn-icon-brand btn-copy" data-id="${summary.id}" title="Kopírovat fakturu" aria-label="Kopírovat fakturu">
+              <button type="button" class="btn-icon btn-icon-brand btn-copy" data-id="${summary.id}" title="Uložit jako šablonu" aria-label="Uložit fakturu jako šablonu">
                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z"/><path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.379a3 3 0 00-.879-2.121L8.94 6.44A1.5 1.5 0 007.88 6H4.5z"/></svg>
               </button>
               <button type="button" class="btn-icon btn-download" data-id="${summary.id}" title="Exportovat .${exportFileExt}" aria-label="Exportovat .${exportFileExt}">
@@ -1060,7 +1072,7 @@ function initListActions() {
   document.getElementById("invoice-list").addEventListener("click", async (e) => {
     const copyBtn = e.target.closest(".btn-copy");
     if (copyBtn) {
-      openInvoiceCopy(copyBtn.dataset.id);
+      await saveInvoiceAsTemplate(copyBtn.dataset.id);
       return;
     }
 
