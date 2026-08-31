@@ -76,7 +76,11 @@ const InvoicePreview = (() => {
 
     return list
       .map((item) => {
-        const total = formatMoney(parseAmount(item.qty) * parseAmount(item.unitPrice));
+        const total = formatMoney(
+          item.manualTotal
+            ? parseAmount(item.total)
+            : parseAmount(item.qty) * parseAmount(item.unitPrice)
+        );
         return `
           <tr>
             <td class="border border-neutral-500 p-1.5 text-invoice-sm">${esc(item.desc || "")}</td>

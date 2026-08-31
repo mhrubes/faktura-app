@@ -43,6 +43,8 @@ function onAccountingFocus(input) {
 
 function formatRowNumericCells(row) {
   row.querySelectorAll(".qty, .unit-price").forEach(formatAccountingInput);
+  const totalInput = row.querySelector(".row-total-input");
+  if (totalInput && totalInput.value.trim()) formatAccountingInput(totalInput);
   const unit = row.querySelector(".unit");
   if (unit) formatUnitInput(unit);
 }
@@ -61,12 +63,39 @@ function showToast(message, type = "success") {
   showToast._timer = setTimeout(() => toast.classList.add("hidden"), type === "error" ? 4000 : 2800);
 }
 
-function calculateRowTotal(row) {
+function computedRowTotal(row) {
   const qty = parseNumber(row.querySelector(".qty").value);
   const price = parseNumber(row.querySelector(".unit-price").value);
-  const total = qty * price;
+  return qty * price;
+}
+
+function calculateRowTotal(row) {
+  const manual = row.dataset.manualTotal === "1";
+  const total = manual
+    ? parseNumber(row.querySelector(".row-total-input").value)
+    : computedRowTotal(row);
   row.querySelector(".row-total").textContent = formatCurrency(total);
   return total;
+}
+
+function applyRowManualTotalUi(row, manual) {
+  row.dataset.manualTotal = manual ? "1" : "";
+  row.classList.toggle("row-manual-total", manual);
+  row.querySelector(".row-total").classList.toggle("row-total--hidden", manual);
+  row.querySelector(".row-total-input").classList.toggle("hidden", !manual);
+  const btn = row.querySelector(".row-total-toggle");
+  btn.classList.toggle("row-total-toggle-active", manual);
+  btn.setAttribute("aria-pressed", manual ? "true" : "false");
+}
+
+function toggleRowManualTotal(row, manual) {
+  const input = row.querySelector(".row-total-input");
+  if (manual && !input.value.trim()) {
+    input.value = formatCurrency(computedRowTotal(row));
+  }
+  applyRowManualTotalUi(row, manual);
+  calculateGrandTotal();
+  updateSaveButtonState();
 }
 
 function calculateGrandTotal() {
@@ -140,7 +169,13 @@ function createItemRowElement(item = {}) {
     <td class="col-price border border-neutral-500 p-1.5 align-middle text-invoice-sm">
       <input type="text" class="unit-price numeric-cell text-right" inputmode="decimal">
     </td>
-    <td class="row-total border border-neutral-500 p-1.5 text-right text-invoice-sm font-bold tabular-nums">0,00</td>
+    <td class="col-total border border-neutral-500 p-1.5 text-right text-invoice-sm font-bold tabular-nums">
+      <div class="row-total-wrap">
+        <span class="row-total">0,00</span>
+        <input type="text" class="row-total-input numeric-cell no-print hidden text-right" inputmode="decimal" aria-label="Celkem – ruční částka" />
+        <button type="button" class="row-total-toggle no-print" aria-pressed="false" title="Přepnout ruční zadání částky Celkem" aria-label="Přepnout ruční zadání částky Celkem">✎</button>
+      </div>
+    </td>
     <td class="no-print cell-action">
       <button type="button" class="btn-remove h-6 w-6 cursor-pointer rounded border border-[#ccc] bg-white text-base leading-none text-red-600 hover:bg-red-50" title="Odebrat řádek" aria-label="Odebrat řádek">×</button>
     </td>
@@ -150,6 +185,8 @@ function createItemRowElement(item = {}) {
   row.querySelector(".qty").value = item.qty ?? "1,00";
   row.querySelector(".unit").value = item.unit ?? "ks";
   row.querySelector(".unit-price").value = item.unitPrice ?? "0,00";
+  row.querySelector(".row-total-input").value = item.total ?? "";
+  applyRowManualTotalUi(row, Boolean(item.manualTotal));
   return row;
 }
 
@@ -189,6 +226,23 @@ function bindRowEvents(row) {
   const unitInput = row.querySelector(".unit");
   if (unitInput) {
     unitInput.addEventListener("blur", () => formatUnitInput(unitInput));
+  }
+
+  const totalToggle = row.querySelector(".row-total-toggle");
+  if (totalToggle) {
+    totalToggle.addEventListener("click", () => {
+      toggleRowManualTotal(row, row.dataset.manualTotal !== "1");
+    });
+  }
+
+  const totalInput = row.querySelector(".row-total-input");
+  if (totalInput) {
+    totalInput.addEventListener("input", calculateGrandTotal);
+    totalInput.addEventListener("focus", () => onAccountingFocus(totalInput));
+    totalInput.addEventListener("blur", () => {
+      formatAccountingInput(totalInput);
+      calculateGrandTotal();
+    });
   }
 
   const removeBtn = row.querySelector(".btn-remove");
@@ -474,6 +528,10 @@ function prepareInvoiceCloneForPdf(invoiceEl) {
       if (!fieldClass) return;
       replaceCloneFieldWithSpan(input, origRow.querySelector(`.${fieldClass}`));
     });
+    // Celkem: v PDF vždy jen text (spočtený i ruční), bez inputu a přepínače
+    row.querySelector(".row-total-input")?.remove();
+    row.querySelector(".row-total-toggle")?.remove();
+    row.querySelector(".row-total")?.classList.remove("row-total--hidden");
   });
 
   clone.querySelectorAll("input[type='text'], input[type='email'], input[type='number']").forEach((input) => {
@@ -1029,7 +1087,7 @@ async function init() {
   await loadInvoiceFromParams();
 
   document.getElementById("items-body").addEventListener("input", (e) => {
-    if (e.target.matches(".qty, .unit-price")) {
+    if (e.target.matches(".qty, .unit-price, .row-total-input")) {
       calculateGrandTotal();
     }
     updateSaveButtonState();

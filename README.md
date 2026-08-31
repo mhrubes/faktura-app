@@ -87,6 +87,7 @@ Migrace jsou ve složce [`pg-scripts/`](pg-scripts/) a jsou **verzované po slo�
 pg-scripts/
 ├── 1.0/   # základní schéma tabulek, indexů a triggerů
 ├── 1.1/   # rozšíření (např. pdf_include_qr)
+├── 1.2/   # ruční částka Celkem u položky (manual_total, total)
 └── run-migrations.js
 ```
 
@@ -167,6 +168,7 @@ Výstup: `desktop/dist/Faktura-1.0.0-portable.exe`
 - Dodavatel, odběratel, datumy, platební údaje a položky
 - Úvodní modal pro rychlé doplnění dodavatele / odběratele z existujících faktur nebo z ARES
 - Automatický výpočet řádků a celkové částky
+- U každé položky přepínač (**✎** ve sloupci Celkem) — místo výpočtu `Počet × Cena za m.j.` lze zapsat vlastní částku Celkem; do celkového součtu faktury pak vstupuje tato ruční hodnota. Ukládá se s fakturou v JSON i PostgreSQL (`invoice_items.manual_total` / `invoice_items.total`)
 - Variabilní symbol se doplňuje z čísla faktury (lze přepsat ručně)
 - Validace — povinné číslo faktury, kontrola duplicity
 - Ochrana před ztrátou práce — při neuložených změnách se při odchodu zpět na seznam zobrazí potvrzovací modal

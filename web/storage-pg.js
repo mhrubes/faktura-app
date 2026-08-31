@@ -48,6 +48,8 @@ function rowToInvoice(row, items) {
       qty: formatAmount(item.qty),
       unit: item.unit || "ks",
       unitPrice: formatAmount(item.unit_price),
+      manualTotal: Boolean(item.manual_total),
+      total: item.manual_total ? formatAmount(item.total) : "",
     })),
     createdAt: toIsoString(row.created_at),
     savedAt: toIsoString(row.saved_at),
@@ -89,6 +91,8 @@ function rowToTemplate(row, items) {
       qty: formatAmount(item.qty),
       unit: item.unit || "ks",
       unitPrice: formatAmount(item.unit_price),
+      manualTotal: Boolean(item.manual_total),
+      total: item.manual_total ? formatAmount(item.total) : "",
     })),
   };
 }
@@ -111,7 +115,7 @@ function createPgStorage({ dataVersion }) {
 
   async function loadInvoiceItems(client, invoiceId) {
     const { rows } = await client.query(
-      `SELECT description, qty, unit, unit_price, position
+      `SELECT description, qty, unit, unit_price, manual_total, total, position
        FROM invoice_items
        WHERE invoice_id = $1
        ORDER BY position ASC`,
@@ -122,7 +126,7 @@ function createPgStorage({ dataVersion }) {
 
   async function loadTemplateItems(client) {
     const { rows } = await client.query(
-      `SELECT description, qty, unit, unit_price, position
+      `SELECT description, qty, unit, unit_price, manual_total, total, position
        FROM template_items
        WHERE template_id = $1
        ORDER BY position ASC`,
@@ -173,8 +177,8 @@ function createPgStorage({ dataVersion }) {
     for (let i = 0; i < list.length; i += 1) {
       const item = list[i];
       await client.query(
-        `INSERT INTO invoice_items (invoice_id, position, description, qty, unit, unit_price)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO invoice_items (invoice_id, position, description, qty, unit, unit_price, manual_total, total)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
           invoiceId,
           i,
@@ -182,6 +186,8 @@ function createPgStorage({ dataVersion }) {
           parseAmount(item.qty),
           item.unit || "ks",
           parseAmount(item.unitPrice),
+          Boolean(item.manualTotal),
+          parseAmount(item.total),
         ]
       );
     }
@@ -332,8 +338,8 @@ function createPgStorage({ dataVersion }) {
     for (let i = 0; i < list.length; i += 1) {
       const item = list[i];
       await client.query(
-        `INSERT INTO template_items (template_id, position, description, qty, unit, unit_price)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO template_items (template_id, position, description, qty, unit, unit_price, manual_total, total)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
           TEMPLATE_ID,
           i,
@@ -341,6 +347,8 @@ function createPgStorage({ dataVersion }) {
           parseAmount(item.qty),
           item.unit || "ks",
           parseAmount(item.unitPrice),
+          Boolean(item.manualTotal),
+          parseAmount(item.total),
         ]
       );
     }

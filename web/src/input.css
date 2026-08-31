@@ -134,7 +134,7 @@
     }
 
     .col-total {
-        @apply w-[75px] text-right;
+        @apply w-[96px] text-right;
     }
 
     .col-action {
@@ -151,6 +151,31 @@
 
     .cell-action {
         @apply !border-0 !bg-transparent p-0.5 text-center;
+    }
+
+    .row-total-wrap {
+        @apply flex items-center justify-end gap-1;
+    }
+
+    .row-total-input {
+        @apply w-full min-w-0;
+    }
+
+    .row-total--hidden {
+        display: none;
+    }
+
+    .row-total-toggle {
+        @apply inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded border border-neutral-300 bg-white text-xs font-normal leading-none text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800;
+    }
+
+    .row-total-toggle-active {
+        @apply border-brand bg-brand-light text-brand;
+    }
+
+    .row-manual-total .qty,
+    .row-manual-total .unit-price {
+        @apply opacity-40;
     }
 
     .pdf-exporting {
@@ -176,6 +201,11 @@
 
     .pdf-exporting .no-print {
         @apply !hidden;
+    }
+
+    /* Celkem: v PDF vždy ukázat text (spočtený i ruční), skrýt input */
+    .pdf-exporting #invoice .row-total--hidden {
+        display: inline !important;
     }
 
     .pdf-exporting #invoice .party-name,
@@ -540,6 +570,10 @@
 
     .no-print {
         @apply !hidden;
+    }
+
+    #invoice .row-total--hidden {
+        display: inline !important;
     }
 
     .invoice {

@@ -149,8 +149,8 @@ function invoiceToSqlStatements(invoice, dataVersion = 1) {
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
       lines.push(
-        `INSERT INTO invoice_items (invoice_id, position, description, qty, unit, unit_price) VALUES (
-  ${sqlLiteral(id)}, ${i}, ${sqlLiteral(item.desc || "")}, ${sqlNumber(item.qty)}, ${sqlLiteral(item.unit || "ks")}, ${sqlNumber(item.unitPrice)}
+        `INSERT INTO invoice_items (invoice_id, position, description, qty, unit, unit_price, manual_total, total) VALUES (
+  ${sqlLiteral(id)}, ${i}, ${sqlLiteral(item.desc || "")}, ${sqlNumber(item.qty)}, ${sqlLiteral(item.unit || "ks")}, ${sqlNumber(item.unitPrice)}, ${sqlLiteral(Boolean(item.manualTotal))}, ${sqlNumber(item.total)}
 );`
       );
     }

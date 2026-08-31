@@ -52,7 +52,7 @@ const InvoiceModel = (() => {
       variableSymbolManual: false,
       pdfIncludeQr: false,
       resolved: false,
-      items: [{ desc: "", qty: "1,00", unit: "ks", unitPrice: "0,00" }],
+      items: [{ desc: "", qty: "1,00", unit: "ks", unitPrice: "0,00", manualTotal: false, total: "" }],
     };
   }
 
@@ -63,6 +63,8 @@ const InvoiceModel = (() => {
       qty: row.querySelector(".qty")?.value || "0,00",
       unit: row.querySelector(".unit")?.value || "",
       unitPrice: row.querySelector(".unit-price")?.value || "0,00",
+      manualTotal: row.dataset.manualTotal === "1",
+      total: row.querySelector(".row-total-input")?.value || "",
     }));
 
     return {
@@ -235,10 +237,12 @@ const InvoiceModel = (() => {
       const num = parseFloat(cleaned);
       return Number.isFinite(num) ? num : 0;
     };
-    return (invoice.items || []).reduce(
-      (sum, item) => sum + parseNumber(item.qty) * parseNumber(item.unitPrice),
-      0
-    );
+    return (invoice.items || []).reduce((sum, item) => {
+      const line = item.manualTotal
+        ? parseNumber(item.total)
+        : parseNumber(item.qty) * parseNumber(item.unitPrice);
+      return sum + line;
+    }, 0);
   }
 
   function formatDateCs(isoDate, emptyValue = "—") {
