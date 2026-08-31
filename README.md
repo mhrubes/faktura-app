@@ -154,6 +154,7 @@ Výstup: `desktop/dist/Faktura-1.0.0-portable.exe`
 ### Seznam faktur
 
 - Přehled faktur s číslem, odběratelem, datem vystavení a částkou
+- **Načíst seznam znovu** — ikonka v hlavičce (tooltip „Načíst seznam znovu"), znovu načte faktury i šablonu z úložiště
 - **Filtry** — odběratel (autocomplete podle jména, IČ, DIČ), datum (rok → měsíc → den)
 - **Řazení** sloupců (číslo, odběratel, datum, částka)
 - **Hromadný výběr** — checkboxy, smazání / označení vyřízeno / zrušení vyřízeno

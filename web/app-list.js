@@ -971,10 +971,25 @@ async function renderInvoiceList() {
   }
 }
 
+async function reloadInvoiceList() {
+  const btn = document.getElementById("btn-reload-list");
+  const icon = btn?.querySelector("svg");
+  if (btn) btn.disabled = true;
+  icon?.classList.add("animate-spin");
+  try {
+    await renderInvoiceList();
+    showToast("Seznam faktur načten znovu.");
+  } finally {
+    icon?.classList.remove("animate-spin");
+    if (btn) btn.disabled = false;
+  }
+}
+
 function initModals() {
   document.getElementById("btn-new-invoice").addEventListener("click", handleNewInvoice);
   document.getElementById("btn-new-empty").addEventListener("click", handleNewInvoice);
   document.getElementById("btn-export").addEventListener("click", openExportModal);
+  document.getElementById("btn-reload-list").addEventListener("click", reloadInvoiceList);
 
   document.getElementById("template-modal-use").addEventListener("click", () => {
     closeTemplateModal();
