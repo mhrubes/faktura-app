@@ -3,11 +3,35 @@ let allInvoices = [];
 let customerOptions = [];
 let listFilters = null;
 let exportFilters = null;
-let sortState = { column: null, direction: "asc" };
 let selectedIds = new Set();
 let visibleIds = [];
 
 const SORT_COLUMNS = ["number", "customer", "issue", "total"];
+const SORT_STORAGE_KEY = "faktura-list-sort";
+const DEFAULT_SORT = { column: "number", direction: "desc" };
+
+// poslední řazení seznamu z localStorage; neplatná/chybějící hodnota = výchozí (číslo sestupně)
+function loadSortState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SORT_STORAGE_KEY));
+    if (saved && SORT_COLUMNS.includes(saved.column) && ["asc", "desc"].includes(saved.direction)) {
+      return { column: saved.column, direction: saved.direction };
+    }
+  } catch {
+    // localStorage nedostupný nebo poškozený záznam
+  }
+  return { ...DEFAULT_SORT };
+}
+
+function saveSortState() {
+  try {
+    localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(sortState));
+  } catch {
+    // zápis se nepodařil (privátní režim apod.), řazení platí jen pro tuto relaci
+  }
+}
+
+let sortState = loadSortState();
 
 let exportFileExt = "json";
 
@@ -483,6 +507,7 @@ function handleSortClick(column) {
     sortState.direction = column === "issue" || column === "total" ? "desc" : "asc";
   }
 
+  saveSortState();
   updateSortHeaderUi();
   renderInvoiceRows();
 }
