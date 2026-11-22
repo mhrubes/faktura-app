@@ -33,6 +33,34 @@ function saveSortState() {
 
 let sortState = loadSortState();
 
+// --- stránkování seznamu ---
+// Dělí se až výsledek po filtrech a řazení (v prohlížeči), takže funguje stejně pro soubory i PostgreSQL:
+// obě úložiště vrací přes /api/invoices stejný seznam faktur.
+const PAGE_SIZE_KEY = "faktura-list-page-size";
+const PAGE_SIZES = [10, 25, 50, 100, 0]; // 0 = vše na jedné stránce
+const DEFAULT_PAGE_SIZE = 25;
+
+function loadPageSize() {
+  try {
+    const saved = Number(localStorage.getItem(PAGE_SIZE_KEY));
+    if (localStorage.getItem(PAGE_SIZE_KEY) !== null && PAGE_SIZES.includes(saved)) return saved;
+  } catch {
+    // localStorage nedostupný
+  }
+  return DEFAULT_PAGE_SIZE;
+}
+
+function savePageSize() {
+  try {
+    localStorage.setItem(PAGE_SIZE_KEY, String(pageSize));
+  } catch {
+    // jen pro tuto relaci
+  }
+}
+
+let pageSize = loadPageSize();
+let currentPage = 1;
+
 let exportFileExt = "json";
 
 function openInvoiceCopy(id) {
@@ -165,9 +193,11 @@ function createFilterController(config) {
   const { ids, onChange } = config;
   let customerFilter = { query: "", selected: null };
   let dateFilter = { year: "", month: "", day: "" };
+  let statusFilter = ""; // "" | "resolved" | "unresolved"
   let suggestionIndex = -1;
 
   const els = {
+    status: ids.status ? document.getElementById(ids.status) : null,
     customer: document.getElementById(ids.customer),
     clearCustomer: document.getElementById(ids.clearCustomer),
     suggestions: document.getElementById(ids.suggestions),
@@ -178,7 +208,7 @@ function createFilterController(config) {
   };
 
   function getFiltered() {
-    return InvoiceFilters.filterInvoices(allInvoices, customerFilter, dateFilter);
+    return InvoiceFilters.filterInvoices(allInvoices, customerFilter, dateFilter, statusFilter);
   }
 
   function updateDateSelects() {
@@ -278,10 +308,16 @@ function createFilterController(config) {
       els.customer.value = customerFilter.query;
     }
     els.clearCustomer.classList.toggle("hidden", !InvoiceFilters.hasCustomerFilter(customerFilter));
+    if (els.status) els.status.value = statusFilter;
     updateDateSelects();
   }
 
   function bind() {
+    els.status?.addEventListener("change", () => {
+      statusFilter = InvoiceFilters.hasStatusFilter(els.status.value) ? els.status.value : "";
+      onChange();
+    });
+
     els.customer.addEventListener("input", () => {
       customerFilter.selected = null;
       customerFilter.query = els.customer.value;
@@ -365,6 +401,7 @@ function createFilterController(config) {
       return {
         customerFilter: InvoiceFilters.cloneCustomerFilter(customerFilter),
         dateFilter: InvoiceFilters.cloneDateFilter(dateFilter),
+        statusFilter,
       };
     },
     closeSuggestions,
@@ -372,12 +409,15 @@ function createFilterController(config) {
     syncFrom(source) {
       customerFilter = InvoiceFilters.cloneCustomerFilter(source.customerFilter);
       dateFilter = InvoiceFilters.cloneDateFilter(source.dateFilter);
+      statusFilter = InvoiceFilters.hasStatusFilter(source.statusFilter) ? source.statusFilter : "";
       syncInputsFromState();
       onChange();
     },
     reset() {
       customerFilter = { query: "", selected: null };
       dateFilter = { year: "", month: "", day: "" };
+      statusFilter = "";
+      if (els.status) els.status.value = "";
       els.customer.value = "";
       closeSuggestions();
       els.clearCustomer.classList.add("hidden");
@@ -387,6 +427,8 @@ function createFilterController(config) {
     clearAll() {
       customerFilter = { query: "", selected: null };
       dateFilter = { year: "", month: "", day: "" };
+      statusFilter = "";
+      if (els.status) els.status.value = "";
       els.customer.value = "";
       closeSuggestions();
       els.clearCustomer.classList.add("hidden");
@@ -400,8 +442,8 @@ function updateListFilterCount() {
   const countEl = document.getElementById("filter-result-count");
   const filtered = listFilters.getFiltered();
   const total = allInvoices.length;
-  const { customerFilter, dateFilter } = listFilters.getState();
-  const hasFilter = InvoiceFilters.hasAnyFilter(customerFilter, dateFilter);
+  const { customerFilter, dateFilter, statusFilter } = listFilters.getState();
+  const hasFilter = InvoiceFilters.hasAnyFilter(customerFilter, dateFilter, statusFilter);
 
   if (!hasFilter) {
     countEl.textContent = total ? `${total} faktur celkem` : "";
@@ -509,6 +551,7 @@ function handleSortClick(column) {
 
   saveSortState();
   updateSortHeaderUi();
+  currentPage = 1; // jiné řazení = zase od první stránky
   renderInvoiceRows();
 }
 
@@ -525,15 +568,16 @@ function renderInvoiceRows() {
   const tbody = document.getElementById("invoice-list");
   const listWrap = document.getElementById("invoice-list-wrap");
   const filterEmpty = document.getElementById("filter-empty-state");
-  const invoices = sortInvoices(listFilters.getFiltered());
-  const { customerFilter, dateFilter } = listFilters.getState();
-  const hasFilter = InvoiceFilters.hasAnyFilter(customerFilter, dateFilter);
+  const sorted = sortInvoices(listFilters.getFiltered());
+  const { customerFilter, dateFilter, statusFilter } = listFilters.getState();
+  const hasFilter = InvoiceFilters.hasAnyFilter(customerFilter, dateFilter, statusFilter);
 
-  if (!invoices.length && hasFilter) {
+  if (!sorted.length && hasFilter) {
     tbody.innerHTML = "";
     listWrap.classList.add("hidden");
     filterEmpty.classList.remove("hidden");
     visibleIds = [];
+    renderPagination(0, 1, 0, 0);
     updateBulkUi();
     return;
   }
@@ -541,7 +585,14 @@ function renderInvoiceRows() {
   filterEmpty.classList.add("hidden");
   listWrap.classList.remove("hidden");
 
-  visibleIds = invoices.map((invoice) => invoice.id);
+  // jen aktuální stránka; po smazání nebo filtru se číslo stránky srovná do platného rozsahu
+  const pages = pageSize ? Math.max(1, Math.ceil(sorted.length / pageSize)) : 1;
+  currentPage = Math.min(Math.max(1, currentPage), pages);
+  const start = pageSize ? (currentPage - 1) * pageSize : 0;
+  const invoices = pageSize ? sorted.slice(start, start + pageSize) : sorted;
+  renderPagination(sorted.length, pages, start, invoices.length);
+
+  visibleIds = invoices.map((invoice) => invoice.id); // "Vybrat vše" označí jen viditelnou stránku
 
   tbody.innerHTML = invoices
     .map((invoice) => {
@@ -596,23 +647,104 @@ function renderInvoiceRows() {
   updateBulkUi();
 }
 
+// čísla stránek k zobrazení: první, poslední a okolí aktuální, mezery jako "…"
+function pageWindow(current, pages) {
+  const set = new Set([1, pages, current - 1, current, current + 1]);
+  if (current <= 3) [2, 3].forEach((p) => set.add(p));
+  if (current >= pages - 2) [pages - 1, pages - 2].forEach((p) => set.add(p));
+  const nums = [...set].filter((p) => p >= 1 && p <= pages).sort((a, b) => a - b);
+  const out = [];
+  nums.forEach((p, i) => {
+    if (i && p - nums[i - 1] > 1) out.push("…");
+    out.push(p);
+  });
+  return out;
+}
+
+// total = počet faktur po filtrech, start = index první zobrazené, shown = kolik jich je na stránce
+// Lišta stránkování je nahoře i dole (.pager); obě ukazují totéž a obě se překreslují společně.
+function renderPagination(total, pages, start, shown) {
+  const bars = document.querySelectorAll(".pager");
+  const show = total > PAGE_SIZES[0]; // do 10 faktur se nestránkuje
+  bars.forEach((bar) => {
+    bar.classList.toggle("hidden", !show);
+    bar.classList.toggle("flex", show);
+  });
+  if (!show) return;
+
+  const infoText = pageSize ? `${start + 1}–${start + shown} z ${total}` : `Všech ${total} faktur`;
+  const btn = (label, page, aria, { disabled = false, current = false } = {}) =>
+    `<button type="button" class="btn-icon${current ? " page-current" : ""}" data-page="${page}" aria-label="${aria}" title="${aria}"${current ? ' aria-current="page"' : ""}${disabled ? " disabled" : ""}>${label}</button>`;
+  const navHtml =
+    pages <= 1
+      ? ""
+      : [
+          btn("«", 1, "První stránka", { disabled: currentPage === 1 }),
+          btn("‹", currentPage - 1, "Předchozí stránka", { disabled: currentPage === 1 }),
+          ...pageWindow(currentPage, pages).map((p) =>
+            p === "…"
+              ? '<span class="page-gap" aria-hidden="true">…</span>'
+              : btn(String(p), p, `Stránka ${p}`, { current: p === currentPage })
+          ),
+          btn("›", currentPage + 1, "Další stránka", { disabled: currentPage === pages }),
+          btn("»", pages, "Poslední stránka", { disabled: currentPage === pages }),
+        ].join("");
+
+  bars.forEach((bar) => {
+    bar.querySelector(".pager-info").textContent = infoText;
+    const select = bar.querySelector(".pager-size");
+    if (select.value !== String(pageSize)) select.value = String(pageSize);
+    bar.querySelector(".pager-nav").innerHTML = navHtml;
+  });
+}
+
+function goToPage(page) {
+  if (!Number.isInteger(page) || page === currentPage) return;
+  currentPage = page;
+  renderInvoiceRows();
+  // po přepnutí (hlavně ze spodní lišty) se vrátit na začátek seznamu, ať není potřeba scrollovat zpět nahoru
+  const anchor = document.getElementById("pager-top");
+  const top = anchor.getBoundingClientRect().top;
+  if (top < 0) window.scrollTo({ top: window.scrollY + top - 16, behavior: "smooth" });
+}
+
+function initPagination() {
+  document.querySelectorAll(".pager").forEach((bar) => {
+    bar.querySelector(".pager-nav").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-page]");
+      if (b && !b.disabled) goToPage(Number(b.dataset.page));
+    });
+    bar.querySelector(".pager-size").addEventListener("change", (e) => {
+      const next = Number(e.target.value);
+      if (!PAGE_SIZES.includes(next)) return;
+      const firstShown = pageSize ? (currentPage - 1) * pageSize : 0; // zůstat u stejných faktur
+      pageSize = next;
+      savePageSize();
+      currentPage = pageSize ? Math.floor(firstShown / pageSize) + 1 : 1;
+      renderInvoiceRows();
+    });
+  });
+}
+
 function updateBulkUi() {
   const bar = document.getElementById("bulk-actions");
   const count = document.getElementById("bulk-count");
   const selectAll = document.getElementById("select-all");
 
   const total = selectedIds.size;
+  const onPage = visibleIds.filter((id) => selectedIds.has(id)).length;
 
   if (bar) bar.classList.toggle("hidden", total === 0);
   if (bar) bar.classList.toggle("flex", total > 0);
 
   if (count) {
-    count.textContent =
-      total === 1 ? "1 faktura označena" : `${total} faktur označeno`;
+    const base = total === 1 ? "1 faktura označena" : `${total} faktur označeno`;
+    // označené na jiných stránkách zůstávají; ať je jasné, že hromadná akce se týká i jich
+    count.textContent = total > onPage ? `${base} (z toho ${total - onPage} mimo tuto stránku)` : base;
   }
 
   if (selectAll) {
-    const visibleSelected = visibleIds.filter((id) => selectedIds.has(id)).length;
+    const visibleSelected = onPage;
     selectAll.checked = visibleIds.length > 0 && visibleSelected === visibleIds.length;
     selectAll.indeterminate = visibleSelected > 0 && visibleSelected < visibleIds.length;
   }
@@ -1210,12 +1342,14 @@ function initFilters() {
       customer: "filter-customer",
       clearCustomer: "filter-clear-customer",
       suggestions: "filter-suggestions",
+      status: "filter-status",
       year: "filter-year",
       month: "filter-month",
       day: "filter-day",
       clearDates: "filter-clear-dates",
     },
     onChange: () => {
+      currentPage = 1; // jiný filtr = zase od první stránky
       updateListFilterCount();
       renderInvoiceRows();
     },
@@ -1226,6 +1360,7 @@ function initFilters() {
       customer: "export-filter-customer",
       clearCustomer: "export-filter-clear-customer",
       suggestions: "export-filter-suggestions",
+      status: "export-filter-status",
       year: "export-filter-year",
       month: "export-filter-month",
       day: "export-filter-day",
@@ -1272,6 +1407,7 @@ async function init() {
   initThemeToggle();
   initFilters();
   initSort();
+  initPagination();
   initModals();
   initListActions();
   initImport();

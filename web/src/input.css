@@ -296,6 +296,19 @@
         @apply border-brand text-brand hover:bg-brand-light;
     }
 
+    /* stránkování seznamu faktur */
+    .page-current {
+        @apply border-brand bg-brand font-semibold text-white hover:bg-brand-dark hover:text-white;
+    }
+
+    .page-gap {
+        @apply inline-flex h-8 w-5 items-center justify-center text-neutral-400;
+    }
+
+    .pagination .btn-icon:disabled {
+        @apply cursor-not-allowed opacity-40 hover:bg-white hover:text-neutral-600;
+    }
+
     .modal-close {
         @apply absolute right-3 top-3 inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded text-2xl leading-none text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700;
     }
@@ -780,6 +793,11 @@ body * {
     color: #aebccd;
 }
 .dark .btn-icon:hover { background-color: #243244; color: #f1f5f9; }
+
+.dark .btn-icon.page-current { background-color: #00b5c8; border-color: #00b5c8; color: #fff; }
+.dark .btn-icon.page-current:hover { background-color: #009aad; color: #fff; }
+.dark .pagination .btn-icon:disabled:hover { background-color: #1e293b; color: #aebccd; }
+.dark .pagination { border-color: #334155; }
 
 .dark .btn-icon-danger { color: #f87171; }
 .dark .btn-icon-danger:hover { background-color: rgba(248, 113, 113, 0.14); color: #fca5a5; }

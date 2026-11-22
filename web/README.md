@@ -14,7 +14,7 @@ Otevři **http://localhost:3000**
 
 ## Co webová verze umí
 
-- seznam faktur s filtrováním, řazením a hromadnými akcemi
+- seznam faktur s filtrováním (odběratel, datum vystavení a **stav**: bez omezení / vyřízené / nevyřízené, platí i v okně exportu), řazením, **stránkováním** a hromadnými akcemi (stránkování: 10 / 25 / 50 / 100 / vše na stránku, výchozí 25, lišta je nahoře i dole nad a pod seznamem, volba se pamatuje v prohlížeči; dělí se až výsledek po filtrech a řazení, takže funguje stejně v JSON i PostgreSQL režimu; do 10 faktur se lišta nezobrazí)
 - editor faktury s výpočtem částek, šablonami a QR platbou
 - ochranu před ztrátou neuložených změn při odchodu z editoru
 - export do PDF přes serverové renderování, takže text v PDF zůstává označitelný

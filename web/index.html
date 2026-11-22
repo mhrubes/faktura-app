@@ -21,6 +21,7 @@
                 <div>
                     <h1 class="text-2xl font-bold text-neutral-900">Faktury</h1>
                     <p id="storage-hint" class="mt-1 text-neutral-600">Faktury se ukládají do složky <code class="text-xs">data/invoices/</code></p>
+                    <p id="app-version" class="mt-0.5 text-xs text-neutral-500" hidden></p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <button type="button" id="theme-toggle" class="theme-toggle" role="switch" aria-checked="false" aria-label="Přepnout světlý a tmavý režim" title="Světlý / tmavý režim">
@@ -101,6 +102,15 @@
                             </div>
                         </div>
 
+                        <div class="filter-status-field shrink-0">
+                            <label for="filter-status" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500"> Stav </label>
+                            <select id="filter-status" class="filter-select min-w-[130px]" title="Stav faktury">
+                                <option value="">Bez omezení</option>
+                                <option value="resolved">Vyřízené</option>
+                                <option value="unresolved">Nevyřízené</option>
+                            </select>
+                        </div>
+
                         <button type="button" id="btn-reload-list" class="btn-icon ml-auto shrink-0" title="Načíst seznam znovu" aria-label="Načíst seznam faktur znovu">
                             <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
@@ -116,7 +126,7 @@
 
                 <div id="filter-empty-state" class="hidden px-6 py-12 text-center">
                     <p class="text-base font-medium text-neutral-800">Žádná faktura neodpovídá filtru</p>
-                    <p class="mt-2 text-sm text-neutral-600">Zkus upravit filtr odběratele nebo datum vystavení.</p>
+                    <p class="mt-2 text-sm text-neutral-600">Zkus upravit filtr odběratele, datum vystavení nebo stav.</p>
                     <button type="button" id="btn-clear-filter" class="btn-secondary mt-5">Zrušit všechny filtry</button>
                 </div>
 
@@ -128,6 +138,24 @@
                         <button type="button" id="btn-bulk-clear" class="btn-secondary">Zrušit výběr</button>
                         <button type="button" id="btn-bulk-delete" class="btn-danger">Smazat označené</button>
                     </div>
+                </div>
+
+                <!-- lišta stránkování nahoře (stejná jako dole, obě se synchronizují) -->
+                <div id="pager-top" class="pager pagination hidden flex-wrap items-center justify-between gap-3 border-b border-neutral-200 px-5 py-3 text-xs text-neutral-600">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="pager-info tabular-nums"></span>
+                        <label class="flex items-center gap-1.5">
+                            Na stránku
+                            <select class="pager-size filter-select" aria-label="Počet faktur na stránku">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="0">Vše</option>
+                            </select>
+                        </label>
+                    </div>
+                    <nav class="pager-nav flex flex-wrap items-center gap-1" aria-label="Stránkování nahoře"></nav>
                 </div>
 
                 <div id="invoice-list-wrap" class="overflow-x-auto">
@@ -156,9 +184,24 @@
                         <tbody id="invoice-list"></tbody>
                     </table>
                 </div>
-            </section>
 
-            <p id="app-version" class="mt-4 text-right text-xs text-neutral-500" hidden></p>
+                <div id="pager-bottom" class="pager pagination hidden flex-wrap items-center justify-between gap-3 border-t border-neutral-200 px-5 py-3 text-xs text-neutral-600">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="pager-info tabular-nums"></span>
+                        <label class="flex items-center gap-1.5">
+                            Na stránku
+                            <select class="pager-size filter-select" aria-label="Počet faktur na stránku">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="0">Vše</option>
+                            </select>
+                        </label>
+                    </div>
+                    <nav class="pager-nav flex flex-wrap items-center gap-1" aria-label="Stránkování dole"></nav>
+                </div>
+            </section>
         </div>
 
         <div id="template-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="template-modal-title">
@@ -302,6 +345,15 @@
                                     </select>
                                     <button type="button" id="export-filter-clear-dates" class="filter-clear-dates hidden" title="Zrušit filtr data" aria-label="Zrušit filtr data">×</button>
                                 </div>
+                            </div>
+
+                            <div class="filter-status-field shrink-0">
+                                <label for="export-filter-status" class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500"> Stav </label>
+                                <select id="export-filter-status" class="filter-select min-w-[130px]" title="Stav faktury">
+                                    <option value="">Bez omezení</option>
+                                    <option value="resolved">Vyřízené</option>
+                                    <option value="unresolved">Nevyřízené</option>
+                                </select>
                             </div>
                         </div>
                         <p id="export-filter-count" class="mt-3 text-sm text-neutral-600">0 faktur k exportu</p>

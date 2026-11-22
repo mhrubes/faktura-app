@@ -84,13 +84,27 @@ const InvoiceFilters = (() => {
     return Boolean(dateFilter.year || dateFilter.month || dateFilter.day);
   }
 
-  function hasAnyFilter(customerFilter, dateFilter) {
-    return hasCustomerFilter(customerFilter) || hasDateFilter(dateFilter);
+  // stav faktury: "" = bez omezení, "resolved" = vyřízené, "unresolved" = nevyřízené
+  function matchesStatusFilter(invoice, status) {
+    if (status === "resolved") return Boolean(invoice.resolved);
+    if (status === "unresolved") return !invoice.resolved;
+    return true;
   }
 
-  function filterInvoices(invoices, customerFilter, dateFilter) {
+  function hasStatusFilter(status) {
+    return status === "resolved" || status === "unresolved";
+  }
+
+  function hasAnyFilter(customerFilter, dateFilter, status = "") {
+    return hasCustomerFilter(customerFilter) || hasDateFilter(dateFilter) || hasStatusFilter(status);
+  }
+
+  function filterInvoices(invoices, customerFilter, dateFilter, status = "") {
     return invoices.filter(
-      (invoice) => matchesCustomerFilter(invoice, customerFilter) && matchesDateFilter(invoice, dateFilter)
+      (invoice) =>
+        matchesCustomerFilter(invoice, customerFilter) &&
+        matchesDateFilter(invoice, dateFilter) &&
+        matchesStatusFilter(invoice, status)
     );
   }
 
@@ -155,6 +169,8 @@ const InvoiceFilters = (() => {
     matchesDateFilter,
     hasCustomerFilter,
     hasDateFilter,
+    matchesStatusFilter,
+    hasStatusFilter,
     hasAnyFilter,
     filterInvoices,
     getAvailableYears,
